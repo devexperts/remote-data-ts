@@ -1,0 +1,28 @@
+{
+  "name": "@devexperts/remote-data",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prettier": "prettier --list-different \"./{src,lib}/**/*.{ts,tsx}\"",
+    "prettier:fix": "prettier --write \"./{src,lib}/**/*.{ts,tsx}\""
+  },
+  "author": "devexperts",
+  "license": "ISC",
+  "devDependencies": {
+    "dx-lint": "github:devex-web-frontend/dx-lint",
+    "fp-ts": "^0.6.8",
+    "prettier": "^1.10.2",
+    "tslib": "^1.9.0",
+    "tslint": "^5.9.1",
+    "tslint-config-prettier": "^1.7.0",
+    "tslint-plugin-prettier": "^1.3.0",
+    "typescript": "^2.7.1"
+  },
+  "peerDependencies": {
+    "fp-ts": "^0.6.8",
+    "tslib": "^1.9.0"
+  }
+}

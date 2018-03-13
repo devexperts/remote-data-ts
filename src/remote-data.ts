@@ -21,13 +21,6 @@ declare module 'fp-ts/lib/HKT' {
 	}
 }
 
-export enum RemoteDataStatus {
-	Initial = 'Initial',
-	Pending = 'Pending',
-	Failure = 'Failure',
-	Success = 'Success',
-}
-
 export class RemoteInitial<L, A> {
 	readonly _tag: 'RemoteInitial' = 'RemoteInitial';
 	// prettier-ignore
@@ -36,7 +29,6 @@ export class RemoteInitial<L, A> {
 	readonly '_A': A;
 	// prettier-ignore
 	readonly '_L': L;
-	readonly status = RemoteDataStatus.Initial;
 
 	alt(fy: RemoteData<L, A>): RemoteData<L, A> {
 		return fy;
@@ -135,7 +127,6 @@ export class RemoteFailure<L, A> {
 	readonly '_A': A;
 	// prettier-ignore
 	readonly '_L': L;
-	readonly status = RemoteDataStatus.Failure;
 
 	constructor(readonly error: L) {}
 
@@ -148,7 +139,7 @@ export class RemoteFailure<L, A> {
 	}
 
 	ap<B>(fab: RemoteData<L, Function1<A, B>>): RemoteData<L, B> {
-		return fab.status === RemoteDataStatus.Failure ? fab : (this as any);
+		return fab.isFailure() ? fab : (this as any);
 	}
 
 	chain<B>(f: Function1<A, RemoteData<L, B>>): RemoteData<L, B> {
@@ -236,7 +227,6 @@ export class RemoteSuccess<L, A> {
 	readonly '_A': A;
 	// prettier-ignore
 	readonly '_L': L;
-	readonly status = RemoteDataStatus.Success;
 
 	constructor(readonly value: A) {}
 
@@ -249,7 +239,7 @@ export class RemoteSuccess<L, A> {
 	}
 
 	ap<B>(fab: RemoteData<L, Function1<A, B>>): RemoteData<L, B> {
-		return fab.status === RemoteDataStatus.Success ? this.map(fab.value) : (fab as any);
+		return fab.isSuccess() ? this.map(fab.value) : (fab as any);
 	}
 
 	chain<B>(f: Function1<A, RemoteData<L, B>>): RemoteData<L, B> {
@@ -337,7 +327,6 @@ export class RemotePending<L, A> {
 	readonly '_A': A;
 	// prettier-ignore
 	readonly '_L': L;
-	readonly status = RemoteDataStatus.Pending;
 
 	alt(fy: RemoteData<L, A>): RemoteData<L, A> {
 		return fy;

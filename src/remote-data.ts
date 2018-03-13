@@ -105,6 +105,10 @@ export class RemoteInitial<L, A> {
 	toString(): string {
 		return 'initial';
 	}
+
+	contains(S: Setoid<A>, a: A): boolean {
+		return false;
+	}
 }
 
 export class RemoteFailure<L, A> {
@@ -186,6 +190,10 @@ export class RemoteFailure<L, A> {
 
 	toString(): string {
 		return `failure(${toString(this.error)})`
+	}
+
+	contains(S: Setoid<A>, a: A): boolean {
+		return false;
 	}
 }
 
@@ -271,6 +279,10 @@ export class RemoteSuccess<L, A> {
 	toString(): string {
 		return `success(${toString(this.value)})`
 	}
+
+	contains(S: Setoid<A>, a: A): boolean {
+		return S.equals(this.value, a);
+	}
 }
 
 export class RemotePending<L, A> {
@@ -350,6 +362,10 @@ export class RemotePending<L, A> {
 
 	toString(): string {
 		return 'pending';
+	}
+
+	contains(S: Setoid<A>, a: A): boolean {
+		return false;
 	}
 }
 

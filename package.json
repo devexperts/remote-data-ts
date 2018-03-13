@@ -12,7 +12,7 @@
     "prepublish": "npm run test && npm run build"
   },
   "author": "devexperts",
-  "license": "ISC",
+  "license": "MPL-2.0",
   "devDependencies": {
     "dx-lint": "github:devex-web-frontend/dx-lint",
     "fp-ts": "^1.1.0",
@@ -46,5 +46,8 @@
     "typescript",
     "algebraic-data-types",
     "functional-programming"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

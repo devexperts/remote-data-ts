@@ -1,4 +1,4 @@
-import { pending, failure, success, RemoteData, initial, combine } from './../remote-data';
+import { pending, failure, success, RemoteData, initial, combine, remoteData } from './../remote-data';
 import { identity, compose } from 'fp-ts/lib/function';
 
 describe('RemoteData', () => {
@@ -121,6 +121,34 @@ describe('RemoteData', () => {
 				expect(succeededRD.ap(pending)).toBe(pending);
 				expect(succeededRD.ap(failedF)).toBe(failedF);
 				expect(succeededRD.ap(f)).toEqual(success(double(1)));
+			});
+		});
+	});
+	describe('Monad', () => {
+		describe('chain', () => {
+			it('initial', () => {
+				expect(initialRD.chain(() => initialRD)).toBe(initialRD);
+				expect(initialRD.chain(() => pendingRD)).toBe(initialRD);
+				expect(initialRD.chain(() => failedRD)).toBe(initialRD);
+				expect(initialRD.chain(() => succeededRD)).toBe(initialRD);
+			});
+			it('pending', () => {
+				expect(pendingRD.chain(() => initialRD)).toBe(pendingRD);
+				expect(pendingRD.chain(() => pendingRD)).toBe(pendingRD);
+				expect(pendingRD.chain(() => failedRD)).toBe(pendingRD);
+				expect(pendingRD.chain(() => succeededRD)).toBe(pendingRD);
+			});
+			it('failure', () => {
+				expect(failedRD.chain(() => initialRD)).toBe(failedRD);
+				expect(failedRD.chain(() => pendingRD)).toBe(failedRD);
+				expect(failedRD.chain(() => failedRD)).toBe(failedRD);
+				expect(failedRD.chain(() => succeededRD)).toBe(failedRD);
+			});
+			it('success', () => {
+				expect(succeededRD.chain(() => initialRD)).toBe(initialRD);
+				expect(succeededRD.chain(() => pendingRD)).toBe(pendingRD);
+				expect(succeededRD.chain(() => failedRD)).toBe(failedRD);
+				expect(succeededRD.chain(() => succeededRD)).toBe(succeededRD);
 			});
 		});
 	});

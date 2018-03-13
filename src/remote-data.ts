@@ -1,23 +1,22 @@
-import { constFalse, Lazy } from "fp-ts/lib/function";
-import { FantasyMonad, Monad } from "fp-ts/lib/Monad";
-import { FantasyFoldable, Foldable } from "fp-ts/lib/Foldable";
-import { Alt, FantasyAlt } from "fp-ts/lib/Alt";
-import { Extend, FantasyExtend } from "fp-ts/lib/Extend";
-import { FantasyTraversable, sequence } from "fp-ts/lib/Traversable";
-import { Applicative } from "fp-ts/lib/Applicative";
-import { HKT2S, HKT2, HKTS, HKT, HKT2As, HKTAs } from "fp-ts/lib/HKT";
+import { constFalse, Function2, Function1, Lazy } from "fp-ts/lib/function";
+import { Monad2 } from "fp-ts/lib/Monad";
+import { Foldable2 } from "fp-ts/lib/Foldable";
+import { Alt2 } from "fp-ts/lib/Alt";
+import { Extend2 } from "fp-ts/lib/Extend";
+import { sequence, Traversable2 } from "fp-ts/lib/Traversable";
 import { isNone, none, Option, some } from "fp-ts/lib/Option";
 import { Either, isLeft } from "fp-ts/lib/Either";
 import { Setoid } from "fp-ts/lib/Setoid";
 import { array } from "fp-ts/lib/Array";
+import { HKT, HKT2, Type, Type2, URIS, URIS2 } from "fp-ts/lib/HKT";
+import { Applicative } from "fp-ts/lib/Applicative";
 
 export const URI = "RemoteData";
 export type URI = typeof URI;
 
 declare module "fp-ts/lib/HKT" {
-	//not that order of type arguments should be reveresed
 	interface URI2HKT2<L, A> {
-		RemoteData: RemoteData<A, L>;
+		RemoteData: RemoteData<L, A>;
 	}
 }
 
@@ -28,87 +27,70 @@ export enum RemoteDataStatus {
 	Success = "Success"
 }
 
-//tslint:disable no-any no-use-before-declare
-export class RemoteInitial<A, L>
-	implements FantasyMonad<URI, A>,
-		FantasyFoldable<A>,
-		FantasyAlt<URI, A>,
-		FantasyExtend<URI, A>,
-		FantasyTraversable<URI, A> {
-	readonly ["_URI"]: URI;
-	readonly ["_A"]: A;
-	readonly ["_L"]: L;
+export class RemoteInitial<L, A> {
+	readonly _tag: "RemoteInitial" = "RemoteInitial";
+	// prettier-ignore
+	readonly '_URI': URI;
+	// prettier-ignore
+	readonly '_A': A;
+	// prettier-ignore
+	readonly '_L': L;
 	readonly status = RemoteDataStatus.Initial;
 
-	alt(fy: RemoteData<A, L>): RemoteData<A, L> {
+	alt(fy: RemoteData<L, A>): RemoteData<L, A> {
 		return fy;
 	}
 
-	ap<B>(fab: RemoteData<(a: A) => B, L>): RemoteData<B, L> {
+	ap<B>(fab: RemoteData<L, Function1<A, B>>): RemoteData<L, B> {
 		return this as any;
 	}
 
-	chain<B>(f: (a: A) => RemoteData<B, L>): RemoteData<B, L> {
+	chain<B>(f: Function1<A, RemoteData<L, B>>): RemoteData<L, B> {
 		return this as any;
 	}
 
-	extend<B>(f: (ea: RemoteData<A, L>) => B): RemoteData<B, L> {
+	extend<B>(f: Function1<RemoteData<L, A>, B>): RemoteData<L, B> {
 		return this as any;
 	}
 
-	fold<B>(
+	foldL<B>(
 		initial: Lazy<B>,
 		pending: Lazy<B>,
-		failure: (failure: L) => B,
-		success: (success: A) => B
+		failure: Function1<L, B>,
+		success: Function1<A, B>
 	): B {
 		return initial();
 	}
 
-	getOrElse(f: Lazy<A>): A {
+	getOrElseL(f: Lazy<A>): A {
 		return f();
 	}
 
-	map<B>(f: (a: A) => B): RemoteData<B, L> {
-		return this as any;
+	map<B>(f: Function1<A, B>): RemoteData<L, B> {
+		return initial;
 	}
 
-	getOrElseValue(value: A): A {
+	getOrElse(value: A): A {
 		return value;
 	}
 
-	reduce<B>(f: (b: B, a: A) => B, b: B): B {
+	reduce<B>(f: Function2<B, A, B>, b: B): B {
 		return b;
 	}
 
-	traverse<F extends HKT2S>(
-		F: Applicative<F>
-	): <L, B>(f: (a: A) => HKT2<F, L, B>) => HKT2As<F, L, RemoteData<B, L>>;
-	traverse<F extends HKTS>(
-		F: Applicative<F>
-	): <B>(f: (a: A) => HKT<F, B>) => HKTAs<F, RemoteData<B, L>>;
-	traverse<F>(
-		F: Applicative<F>
-	): <B>(f: (a: A) => HKT<F, B>) => HKT<F, RemoteData<B, L>>;
-	traverse<F>(
-		F: Applicative<F>
-	): <B>(f: (a: A) => HKT<F, B>) => HKT<F, RemoteData<B, L>> {
-		return f => F.of(this as any);
-	}
-
-	isPending(): this is RemotePending<A, L> {
+	isPending(): this is RemotePending<L, A> {
 		return false;
 	}
 
-	isFailure(): this is RemoteFailure<A, L> {
+	isFailure(): this is RemoteFailure<L, A> {
 		return false;
 	}
 
-	isSuccess(): this is RemoteSuccess<A, L> {
+	isSuccess(): this is RemoteSuccess<L, A> {
 		return false;
 	}
 
-	isInitial(): this is RemoteInitial<A, L> {
+	isInitial(): this is RemoteInitial<L, A> {
 		return true;
 	}
 
@@ -121,88 +103,72 @@ export class RemoteInitial<A, L>
 	}
 }
 
-export class RemoteFailure<A, L>
-	implements FantasyMonad<URI, A>,
-		FantasyFoldable<A>,
-		FantasyAlt<URI, A>,
-		FantasyExtend<URI, A>,
-		FantasyTraversable<URI, A> {
-	readonly ["_URI"]: URI;
-	readonly ["_A"]: A;
-	readonly ["_L"]: L;
+export class RemoteFailure<L, A> {
+	readonly _tag: "RemoteFailure" = "RemoteFailure";
+	// prettier-ignore
+	readonly '_URI': URI;
+	// prettier-ignore
+	readonly '_A': A;
+	// prettier-ignore
+	readonly '_L': L;
 	readonly status = RemoteDataStatus.Failure;
 
 	constructor(readonly error: L) {}
 
-	alt(fy: RemoteData<A, L>): RemoteData<A, L> {
+	alt(fy: RemoteData<L, A>): RemoteData<L, A> {
 		return fy;
 	}
 
-	ap<B>(fab: RemoteData<(a: A) => B, L>): RemoteData<B, L> {
+	ap<B>(fab: RemoteData<L, Function1<A, B>>): RemoteData<L, B> {
 		return fab.status === RemoteDataStatus.Failure ? fab : (this as any);
 	}
 
-	chain<B>(f: (a: A) => RemoteData<B, L>): RemoteData<B, L> {
+	chain<B>(f: Function1<A, RemoteData<L, B>>): RemoteData<L, B> {
 		return this as any;
 	}
 
-	extend<B>(f: (ea: RemoteData<A, L>) => B): RemoteData<B, L> {
+	extend<B>(f: Function1<RemoteData<L, A>, B>): RemoteData<L, B> {
 		return this as any;
 	}
 
-	fold<B>(
+	foldL<B>(
 		initial: Lazy<B>,
 		pending: Lazy<B>,
-		failure: (failure: L) => B,
-		success: (success: A) => B
+		failure: Function1<L, B>,
+		success: Function1<A, B>
 	): B {
 		return failure(this.error);
 	}
 
-	getOrElse(f: Lazy<A>): A {
+	getOrElseL(f: Lazy<A>): A {
 		return f();
 	}
 
-	map<B>(f: (a: A) => B): RemoteData<B, L> {
+	map<B>(f: (a: A) => B): RemoteData<L, B> {
 		return this as any;
 	}
 
-	getOrElseValue(value: A): A {
+	getOrElse(value: A): A {
 		return value;
 	}
 
-	reduce<B>(f: (b: B, a: A) => B, b: B): B {
+	reduce<B>(f: Function2<B, A, B>, b: B): B {
 		return b;
 	}
 
-	traverse<F extends HKT2S>(
-		F: Applicative<F>
-	): <L, B>(f: (a: A) => HKT2<F, L, B>) => HKT2As<F, L, RemoteData<B, L>>;
-	traverse<F extends HKTS>(
-		F: Applicative<F>
-	): <B>(f: (a: A) => HKT<F, B>) => HKTAs<F, RemoteData<B, L>>;
-	traverse<F>(
-		F: Applicative<F>
-	): <B>(f: (a: A) => HKT<F, B>) => HKT<F, RemoteData<B, L>>;
-	traverse<F>(
-		F: Applicative<F>
-	): <B>(f: (a: A) => HKT<F, B>) => HKT<F, RemoteData<B, L>> {
-		return f => F.of(this as any);
-	}
-
-	isInitial(): this is RemoteInitial<A, L> {
+	isInitial(): this is RemoteInitial<L, A> {
 		return false;
 	}
 
-	isPending(): this is RemotePending<A, L> {
+	isPending(): this is RemotePending<L, A> {
 		return false;
 	}
 
-	isFailure(): this is RemoteFailure<A, L> {
+	isFailure(): this is RemoteFailure<L, A> {
 		return true;
 	}
 
-	isSuccess(): this is RemoteSuccess<A, L> {
+	isSuccess(): this is RemoteSuccess<L, A> {
 		return false;
 	}
 
@@ -215,91 +181,74 @@ export class RemoteFailure<A, L>
 	}
 }
 
-export class RemoteSuccess<A, L>
-	implements FantasyMonad<URI, A>,
-		FantasyFoldable<A>,
-		FantasyAlt<URI, A>,
-		FantasyExtend<URI, A>,
-		FantasyTraversable<URI, A> {
-	readonly ["_URI"]: URI;
-	readonly ["_A"]: A;
-	readonly ["_L"]: L;
+export class RemoteSuccess<L, A> {
+	readonly _tag: "RemoteSuccess" = "RemoteSuccess";
+	// prettier-ignore
+	readonly '_URI': URI;
+	// prettier-ignore
+	readonly '_A': A;
+	// prettier-ignore
+	readonly '_L': L;
 	readonly status = RemoteDataStatus.Success;
 
 	constructor(readonly value: A) {}
 
-	alt(fy: RemoteData<A, L>): RemoteData<A, L> {
+	alt(fy: RemoteData<L, A>): RemoteData<L, A> {
 		return this;
 	}
 
-	ap<B>(fab: RemoteData<(a: A) => B, L>): RemoteData<B, L> {
+	ap<B>(fab: RemoteData<L, Function1<A, B>>): RemoteData<L, B> {
 		return fab.status === RemoteDataStatus.Success
 			? this.map(fab.value)
 			: (fab as any);
 	}
 
-	chain<B>(f: (a: A) => RemoteData<B, L>): RemoteData<B, L> {
+	chain<B>(f: Function1<A, RemoteData<L, B>>): RemoteData<L, B> {
 		return f(this.value);
 	}
 
-	extend<B>(f: (ea: RemoteData<A, L>) => B): RemoteData<B, L> {
-		return RemoteDataUtils.success<B, L>(f(this));
+	extend<B>(f: Function1<RemoteData<L, A>, B>): RemoteData<L, B> {
+		return of(f(this));
 	}
 
-	fold<B>(
+	foldL<B>(
 		initial: Lazy<B>,
 		pending: Lazy<B>,
-		failure: (failure: L) => B,
-		success: (success: A) => B
+		failure: Function1<L, B>,
+		success: Function1<A, B>
 	): B {
 		return success(this.value);
 	}
 
-	getOrElse(f: Lazy<A>): A {
+	getOrElseL(f: Lazy<A>): A {
 		return this.value;
 	}
 
-	map<B>(f: (a: A) => B): RemoteData<B, L> {
-		return RemoteDataUtils.success<B, L>(f(this.value));
+	map<B>(f: Function1<A, B>): RemoteData<L, B> {
+		return of(f(this.value));
 	}
 
-	getOrElseValue(value: A): A {
+	getOrElse(value: A): A {
 		return this.value;
 	}
 
-	reduce<B>(f: (b: B, a: A) => B, b: B): B {
+	reduce<B>(f: Function2<B, A, B>, b: B): B {
 		return f(b, this.value);
 	}
 
-	traverse<F extends HKT2S>(
-		F: Applicative<F>
-	): <M, B>(f: (a: A) => HKT2<F, M, B>) => HKT2As<F, M, RemoteData<B, L>>;
-	traverse<F extends HKTS>(
-		F: Applicative<F>
-	): <B>(f: (a: A) => HKT<F, B>) => HKTAs<F, RemoteData<B, L>>;
-	traverse<F>(
-		F: Applicative<F>
-	): <B>(f: (a: A) => HKT<F, B>) => HKT<F, RemoteData<B, L>>;
-	traverse<F>(
-		F: Applicative<F>
-	): <B>(f: (a: A) => HKT<F, B>) => HKT<F, RemoteData<B, L>> {
-		return f =>
-			F.map(b => RemoteDataUtils.success<any, L>(b), f(this.value));
-	}
-
-	isInitial(): this is RemoteInitial<A, L> {
+	isInitial(): this is RemoteInitial<L, A> {
 		return false;
 	}
 
-	isPending(): this is RemotePending<A, L> {
+	isPending(): this is RemotePending<L, A> {
 		return false;
 	}
 
-	isFailure(): this is RemoteFailure<A, L> {
+	isFailure(): this is RemoteFailure<L, A> {
 		return false;
 	}
 
-	isSuccess(): this is RemoteSuccess<A, L> {
+	isSuccess(): this is RemoteSuccess<L, A> {
 		return true;
 	}
 
@@ -312,86 +261,70 @@ export class RemoteSuccess<A, L>
 	}
 }
 
-export class RemotePending<A, L>
-	implements FantasyMonad<URI, A>,
-		FantasyFoldable<A>,
-		FantasyAlt<URI, A>,
-		FantasyExtend<URI, A>,
-		FantasyTraversable<URI, A> {
-	readonly ["_URI"]: URI;
-	readonly ["_A"]: A;
-	readonly ["_L"]: L;
+export class RemotePending<L, A> {
+	readonly _tag: "RemotePending" = "RemotePending";
+	// prettier-ignore
+	readonly '_URI': URI;
+	// prettier-ignore
+	readonly '_A': A;
+	// prettier-ignore
+	readonly '_L': L;
 	readonly status = RemoteDataStatus.Pending;
 
-	alt(fy: RemoteData<A, L>): RemoteData<A, L> {
+	alt(fy: RemoteData<L, A>): RemoteData<L, A> {
 		return fy;
 	}
 
-	ap<B>(fab: RemoteData<(a: A) => B, L>): RemoteData<B, L> {
+	ap<B>(fab: RemoteData<L, Function1<A, B>>): RemoteData<L, B> {
 		return this as any;
 	}
 
-	chain<B>(f: (a: A) => RemoteData<B, L>): RemoteData<B, L> {
+	chain<B>(f: Function1<A, RemoteData<L, B>>): RemoteData<L, B> {
 		return this as any;
 	}
 
-	extend<B>(f: (ea: RemoteData<A, L>) => B): RemoteData<B, L> {
+	extend<B>(f: Function1<RemoteData<L, A>, B>): RemoteData<L, B> {
 		return this as any;
 	}
 
-	fold<B>(
+	foldL<B>(
 		initial: Lazy<B>,
 		pending: Lazy<B>,
-		failure: (failure: L) => B,
-		success: (success: A) => B
+		failure: Function1<L, B>,
+		success: Function1<A, B>
 	): B {
 		return pending();
 	}
 
-	getOrElse(f: Lazy<A>): A {
+	getOrElseL(f: Lazy<A>): A {
 		return f();
 	}
 
-	map<B>(f: (a: A) => B): RemoteData<B, L> {
+	map<B>(f: Function1<A, B>): RemoteData<L, B> {
 		return this as any;
 	}
 
-	getOrElseValue(value: A): A {
+	getOrElse(value: A): A {
 		return value;
 	}
 
-	reduce<B>(f: (b: B, a: A) => B, b: B): B {
+	reduce<B>(f: Function2<B, A, B>, b: B): B {
 		return b;
 	}
 
-	traverse<F extends HKT2S>(
-		F: Applicative<F>
-	): <L, B>(f: (a: A) => HKT2<F, L, B>) => HKT2As<F, L, RemoteData<B, L>>;
-	traverse<F extends HKTS>(
-		F: Applicative<F>
-	): <B>(f: (a: A) => HKT<F, B>) => HKTAs<F, RemoteData<B, L>>;
-	traverse<F>(
-		F: Applicative<F>
-	): <B>(f: (a: A) => HKT<F, B>) => HKT<F, RemoteData<B, L>>;
-	traverse<F>(
-		F: Applicative<F>
-	): <B>(f: (a: A) => HKT<F, B>) => HKT<F, RemoteData<B, L>> {
-		return f => F.of(this as any);
-	}
-
-	isInitial(): this is RemoteInitial<A, L> {
+	isInitial(): this is RemoteInitial<L, A> {
 		return false;
 	}
 
-	isPending(): this is RemotePending<A, L> {
+	isPending(): this is RemotePending<L, A> {
 		return true;
 	}
 
-	isFailure(): this is RemoteFailure<A, L> {
+	isFailure(): this is RemoteFailure<L, A> {
 		return false;
 	}
 
-	isSuccess(): this is RemoteSuccess<A, L> {
+	isSuccess(): this is RemoteSuccess<L, A> {
 		return false;
 	}
 
@@ -404,147 +337,213 @@ export class RemotePending<A, L>
 	}
 }
 
-export type RemoteData<A, L = Error> =
-	| RemoteInitial<A, L>
-	| RemoteFailure<A, L>
-	| RemoteSuccess<A, L>
-	| RemotePending<A, L>;
+//tslint:enable no-any no-use-before-declare
 
-export namespace RemoteDataUtils {
-	export const failure = <A, L = Error>(error: L): RemoteFailure<A, L> =>
-		new RemoteFailure(error);
-	export const success = <A, L = Error>(value: A): RemoteSuccess<A, L> =>
-		new RemoteSuccess(value);
-	export const pending: RemotePending<never, never> = new RemotePending<
-		never,
-		never
-	>();
-	export const initial: RemoteInitial<never, never> = new RemoteInitial<
-		never,
-		never
-	>();
+export type RemoteData<L, A> =
+	| RemoteInitial<L, A>
+	| RemoteFailure<L, A>
+	| RemoteSuccess<L, A>
+	| RemotePending<L, A>;
 
-	export const isFailure = <A, L>(
-		data: RemoteData<A, L>
-	): data is RemoteFailure<A, L> => data.isFailure();
-	export const isSuccess = <A, L>(
-		data: RemoteData<A, L>
-	): data is RemoteSuccess<A, L> => data.isSuccess();
-	export const isPending = <A, L>(
-		data: RemoteData<A, L>
-	): data is RemotePending<A, L> => data.isPending();
-	export const isInitial = <A, L>(
-		data: RemoteData<A, L>
-	): data is RemoteInitial<A, L> => data.isInitial();
+//Monad
+const of = <L, A>(value: A): RemoteSuccess<L, A> => new RemoteSuccess(value);
+const ap = <L, A, B>(
+	fab: RemoteData<L, Function1<A, B>>,
+	fa: RemoteData<L, A>
+): RemoteData<L, B> => fa.ap(fab);
+const map = <L, A, B>(
+	fa: RemoteData<L, A>,
+	f: Function1<A, B>
+): RemoteData<L, B> => fa.map(f);
+const chain = <L, A, B>(
+	fa: RemoteData<L, A>,
+	f: Function1<A, RemoteData<L, B>>
+): RemoteData<L, B> => fa.chain(f);
 
-	export const getSetoid = <A, L>(S: Setoid<A>): Setoid<RemoteData<A, L>> => {
-		return {
-			equals: x => y => {
-				return x.fold(
-					() => y.isInitial(),
-					() => y.isPending(),
-					xError =>
-						y.fold(
-							constFalse,
-							constFalse,
-							yError => yError === xError,
-							constFalse
-						),
-					ax =>
-						y.fold(constFalse, constFalse, constFalse, ay =>
-							S.equals(ax)(ay)
-						)
-				);
-			}
-		};
-	};
+//Foldable
+const reduce = <L, A, B>(
+	fa: RemoteData<L, A>,
+	b: B,
+	f: Function2<B, A, B>
+): B => fa.reduce(f, b);
 
-	export const getCommonStatus = (
-		statuses: RemoteDataStatus[]
-	): RemoteDataStatus => {
-		if (statuses.indexOf(RemoteDataStatus.Pending) !== -1) {
-			return RemoteDataStatus.Pending;
-		} else if (statuses.indexOf(RemoteDataStatus.Failure) !== -1) {
-			return RemoteDataStatus.Failure;
-		} else if (
-			statuses.every(status => status === RemoteDataStatus.Success)
-		) {
-			return RemoteDataStatus.Success;
+//Traversable
+function traverse<F extends URIS2>(
+	F: Applicative<F>
+): <L, A, B>(
+	ta: RemoteData<L, A>,
+	f: Function1<A, HKT2<F, L, B>>
+) => Type2<F, L, RemoteData<L, B>>;
+function traverse<F extends URIS>(
+	F: Applicative<F>
+): <L, A, B>(
+	ta: RemoteData<L, A>,
+	f: Function1<A, HKT<F, B>>
+) => Type<F, RemoteData<L, B>>;
+function traverse<F>(
+	F: Applicative<F>
+): <L, A, B>(
+	ta: RemoteData<L, A>,
+	f: Function1<A, HKT<F, B>>
+) => HKT<F, RemoteData<L, B>>;
+function traverse<F>(
+	F: Applicative<F>
+): <L, A, B>(
+	ta: RemoteData<L, A>,
+	f: Function1<A, HKT<F, B>>
+) => HKT<F, RemoteData<L, B>> {
+	return (ta, f) => {
+		if (ta.isSuccess()) {
+			return F.map(f(ta.value), of);
 		} else {
-			return RemoteDataStatus.Initial;
+			return F.of(ta as any);
 		}
 	};
+}
 
-	export function fromOption<A, L>(
-		option: Option<A>,
-		error: Lazy<L>
-	): RemoteData<A, L> {
-		if (isNone(option)) {
-			return failure<A, L>(error());
-		} else {
-			return success<A, L>(option.value);
+//Alt
+const alt = <L, A>(
+	fx: RemoteData<L, A>,
+	fy: RemoteData<L, A>
+): RemoteData<L, A> => fx.alt(fy);
+
+//Extend
+const extend = <L, A, B>(
+	fla: RemoteData<L, A>,
+	f: (fla: RemoteData<L, A>) => B
+): RemoteData<L, B> => fla.extend(f);
+
+//constructors
+export const failure = <L, A>(error: L): RemoteFailure<L, A> =>
+	new RemoteFailure(error);
+export const success: <L, A>(value: A) => RemoteSuccess<L, A> = of;
+export const pending: RemotePending<never, never> = new RemotePending<
+	never,
+	never
+>();
+export const initial: RemoteInitial<never, never> = new RemoteInitial<
+	never,
+	never
+>();
+
+//filters
+export const isFailure = <L, A>(
+	data: RemoteData<L, A>
+): data is RemoteFailure<L, A> => data.isFailure();
+export const isSuccess = <L, A>(
+	data: RemoteData<L, A>
+): data is RemoteSuccess<L, A> => data.isSuccess();
+export const isPending = <L, A>(
+	data: RemoteData<L, A>
+): data is RemotePending<L, A> => data.isPending();
+export const isInitial = <L, A>(
+	data: RemoteData<L, A>
+): data is RemoteInitial<L, A> => data.isInitial();
+
+//Setoid
+export const getSetoid = <A, L>(S: Setoid<A>): Setoid<RemoteData<L, A>> => {
+	return {
+		equals: (x, y) => {
+			return x.foldL(
+				() => y.isInitial(),
+				() => y.isPending(),
+				xError =>
+					y.foldL(
+						constFalse,
+						constFalse,
+						yError => yError === xError,
+						constFalse
+					),
+				ax =>
+					y.foldL(constFalse, constFalse, constFalse, ay =>
+						S.equals(ax, ay)
+					)
+			);
 		}
-	}
+	};
+};
 
-	export function fromEither<A, L>(either: Either<L, A>): RemoteData<A, L> {
-		if (isLeft(either)) {
-			return failure<A, L>(either.value);
-		} else {
-			return success<A, L>(either.value);
-		}
-	}
-
-	export function combine<A, L>(a: RemoteData<A, L>): RemoteData<[A], L>;
-	export function combine<A, B, L>(
-		a: RemoteData<A, L>,
-		b: RemoteData<B, L>
-	): RemoteData<[A, B], L>;
-	export function combine<A, B, C, L>(
-		a: RemoteData<A, L>,
-		b: RemoteData<B, L>,
-		c: RemoteData<C, L>
-	): RemoteData<[A, B, C], L>;
-	export function combine<A, B, C, D, L>(
-		a: RemoteData<A, L>,
-		b: RemoteData<B, L>,
-		c: RemoteData<C, L>,
-		d: RemoteData<D, L>
-	): RemoteData<[A, B, C, D], L>;
-	export function combine<T, L>(
-		...list: RemoteData<T, L>[]
-	): RemoteData<T[], L> {
-		return sequence(remoteData, array)(list);
+export function fromOption<L, A>(
+	option: Option<A>,
+	error: Lazy<L>
+): RemoteData<L, A> {
+	if (isNone(option)) {
+		return failure(error());
+	} else {
+		return success(option.value);
 	}
 }
 
-export const remoteData: Monad<URI> & Foldable<URI> & Alt<URI> & Extend<URI> = {
+export function fromEither<L, A>(either: Either<L, A>): RemoteData<L, A> {
+	if (isLeft(either)) {
+		return failure(either.value);
+	} else {
+		return success(either.value);
+	}
+}
+
+//instance
+export const remoteData: Monad2<URI> &
+	Foldable2<URI> &
+	Traversable2<URI> &
+	Alt2<URI> &
+	Extend2<URI> = {
 	//HKT
 	URI,
 
 	//Monad
-	of: RemoteDataUtils.success,
-	ap: <L, A, B>(
-		fab: RemoteData<(a: A) => B, L>,
-		fa: RemoteData<A, L>
-	): RemoteData<B, L> => fa.ap(fab),
-	map: <L, A, B>(f: (a: A) => B, fa: RemoteData<A, L>): RemoteData<B, L> =>
-		fa.map(f),
-	chain: <L, A, B>(
-		f: (a: A) => RemoteData<B, L>,
-		fa: RemoteData<A, L>
-	): RemoteData<B, L> => fa.chain(f),
+	of,
+	ap,
+	map,
+	chain,
 
 	//Foldable
-	reduce: <L, A, B>(f: (b: B, a: A) => B, b: B, fa: RemoteData<A, L>): B =>
-		fa.reduce(f, b),
+	reduce,
+
+	//Traversable
+	traverse,
 
 	//Alt
-	alt: <L, A>(fa: RemoteData<A, L>, fb: RemoteData<A, L>): RemoteData<A, L> =>
-		fa.alt(fb),
+	alt,
 
 	//Extend
-	extend: <L, A, B>(
-		f: (fla: RemoteData<A, L>) => B,
-		fla: RemoteData<A, L>
-	): RemoteData<B, L> => fla.extend(f)
+	extend
 };
+
+export function combine<A, L>(a: RemoteData<L, A>): RemoteData<L, [A]>;
+export function combine<A, B, L>(
+	a: RemoteData<L, A>,
+	b: RemoteData<L, B>
+): RemoteData<L, [A, B]>;
+export function combine<A, B, C, L>(
+	a: RemoteData<L, A>,
+	b: RemoteData<L, B>,
+	c: RemoteData<L, C>
+): RemoteData<L, [A, B, C]>;
+export function combine<A, B, C, D, L>(
+	a: RemoteData<L, A>,
+	b: RemoteData<L, B>,
+	c: RemoteData<L, C>,
+	d: RemoteData<L, D>
+): RemoteData<L, [A, B, C, D]>;
+export function combine<A, B, C, D, E, L>(
+	a: RemoteData<L, A>,
+	b: RemoteData<L, B>,
+	c: RemoteData<L, C>,
+	d: RemoteData<L, D>,
+	e: RemoteData<L, E>
+): RemoteData<L, [A, B, C, D, E]>;
+export function combine<A, B, C, D, E, F, L>(
+	a: RemoteData<L, A>,
+	b: RemoteData<L, B>,
+	c: RemoteData<L, C>,
+	d: RemoteData<L, D>,
+	e: RemoteData<L, E>,
+	f: RemoteData<L, F>
+): RemoteData<L, [A, B, C, D, E, F]>;
+export function combine<T, L>(...list: RemoteData<L, T>[]): RemoteData<L, T[]> {
+	if (list.length === 0) {
+		return of([]);
+	}
+	return sequence(remoteData, array)(list);
+}

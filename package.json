@@ -13,7 +13,7 @@
   "license": "ISC",
   "devDependencies": {
     "dx-lint": "github:devex-web-frontend/dx-lint",
-    "fp-ts": "^0.6.8",
+    "fp-ts": "^1.1.0",
     "prettier": "^1.10.2",
     "tslib": "^1.9.0",
     "tslint": "^5.9.1",

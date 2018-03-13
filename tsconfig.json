@@ -2,7 +2,7 @@
   "compilerOptions": {
     "module": "commonjs",
     "target": "es5",
-    "outDir": "lib",
+    "outDir": "dist",
     "declaration": true,
     "strict": true,
     "importHelpers": true,

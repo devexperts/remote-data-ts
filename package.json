@@ -5,8 +5,9 @@
   "typings": "dist/remote-data.d.ts",
   "scripts": {
     "build": "tsc",
-    "test": "npm run tslint && npm run prettier",
+    "test": "npm run tslint && npm run prettier && npm run jest",
     "tslint": "tslint -c tslint.json --project tsconfig.json './src/**/*.ts'",
+    "jest": "jest",
     "prettier": "prettier --list-different \"./src/**/*.ts\"",
     "prettier:fix": "prettier --write \"./src/**/*.ts\"",
     "prepublish": "npm run test && npm run build"
@@ -14,9 +15,12 @@
   "author": "devexperts",
   "license": "MPL-2.0",
   "devDependencies": {
+    "@types/jest": "^22.2.0",
     "dx-lint": "github:devex-web-frontend/dx-lint",
     "fp-ts": "^1.1.0",
+    "jest-cli": "^22.4.2",
     "prettier": "^1.10.2",
+    "ts-jest": "^22.4.1",
     "tslib": "^1.9.0",
     "tslint": "^5.9.1",
     "tslint-config-prettier": "^1.7.0",
@@ -49,5 +53,15 @@
   ],
   "publishConfig": {
     "access": "public"
+  },
+  "jest": {
+    "transform": {
+      "^.+\\.tsx?$": "ts-jest"
+    },
+    "testRegex": "(/__tests__/.*|(\\.|/)spec)\\.ts$",
+    "moduleFileExtensions": [
+      "ts",
+      "js"
+    ]
   }
 }

@@ -440,8 +440,6 @@ export class RemotePending<L, A> {
 	}
 }
 
-//tslint:enable no-any no-use-before-declare
-
 /**
  * Represents a value of one of four possible types (a disjoint union)
  *

@@ -3,6 +3,10 @@ import { identity, compose } from 'fp-ts/lib/function';
 
 describe('RemoteData', () => {
 	const double = (x: number) => x * 2;
+	const initialRD: RemoteData<string, number> = initial;
+	const pendingRD: RemoteData<string, number> = pending;
+	const succeededRD: RemoteData<string, number> = success(1);
+	const failedRD: RemoteData<string, number> = failure('foo');
 	describe('Functor', () => {
 		describe('should map over value', () => {
 			it('initial', () => {
@@ -63,10 +67,6 @@ describe('RemoteData', () => {
 		});
 	});
 	describe('Alt', () => {
-		const initialRD: RemoteData<string, number> = initial;
-		const pendingRD: RemoteData<string, number> = pending;
-		const succeededRD: RemoteData<string, number> = success(1);
-		const failedRD: RemoteData<string, number> = failure('foo');
 		describe('should alt', () => {
 			it('initial', () => {
 				expect(initialRD.alt(initialRD)).toBe(initialRD);
@@ -91,6 +91,36 @@ describe('RemoteData', () => {
 				expect(succeededRD.alt(initialRD)).toBe(succeededRD);
 				expect(succeededRD.alt(failedRD)).toBe(succeededRD);
 				expect(succeededRD.alt(succeededRD)).toBe(succeededRD);
+			});
+		});
+	});
+	describe('Apply', () => {
+		describe('should ap', () => {
+			const f: RemoteData<string, (a: number) => number> = success(double);
+			const failedF: RemoteData<string, (a: number) => number> = failure('foo');
+			it('initial', () => {
+				expect(initialRD.ap(initial)).toBe(initialRD);
+				expect(initialRD.ap(pending)).toBe(initialRD);
+				expect(initialRD.ap(failedF)).toBe(initialRD);
+				expect(initialRD.ap(f)).toBe(initialRD);
+			});
+			it('pending', () => {
+				expect(pendingRD.ap(initial)).toBe(pendingRD);
+				expect(pendingRD.ap(pending)).toBe(pendingRD);
+				expect(pendingRD.ap(failedF)).toBe(pendingRD);
+				expect(pendingRD.ap(f)).toBe(pendingRD);
+			});
+			it('failure', () => {
+				expect(failedRD.ap(initial)).toBe(failedRD);
+				expect(failedRD.ap(pending)).toBe(failedRD);
+				expect(failedRD.ap(failedF)).toBe(failedF);
+				expect(failedRD.ap(f)).toBe(failedRD);
+			});
+			it('success', () => {
+				expect(succeededRD.ap(initial)).toBe(initial);
+				expect(succeededRD.ap(pending)).toBe(pending);
+				expect(succeededRD.ap(failedF)).toBe(failedF);
+				expect(succeededRD.ap(f)).toEqual(success(double(1)));
 			});
 		});
 	});

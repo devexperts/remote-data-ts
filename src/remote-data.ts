@@ -47,15 +47,15 @@ export class RemoteInitial<L, A> {
 	}
 
 	ap<B>(fab: RemoteData<L, Function1<A, B>>): RemoteData<L, B> {
-		return this as any;
+		return initial;
 	}
 
 	chain<B>(f: Function1<A, RemoteData<L, B>>): RemoteData<L, B> {
-		return this as any;
+		return initial;
 	}
 
 	extend<B>(f: Function1<RemoteData<L, A>, B>): RemoteData<L, B> {
-		return this as any;
+		return initial;
 	}
 
 	foldL<B>(initial: Lazy<B>, pending: Lazy<B>, failure: Function1<L, B>, success: Function1<A, B>): B {
@@ -336,15 +336,15 @@ export class RemotePending<L, A> {
 	}
 
 	ap<B>(fab: RemoteData<L, Function1<A, B>>): RemoteData<L, B> {
-		return this as any;
+		return pending;
 	}
 
 	chain<B>(f: Function1<A, RemoteData<L, B>>): RemoteData<L, B> {
-		return this as any;
+		return pending;
 	}
 
 	extend<B>(f: Function1<RemoteData<L, A>, B>): RemoteData<L, B> {
-		return this as any;
+		return pending;
 	}
 
 	foldL<B>(initial: Lazy<B>, pending: Lazy<B>, failure: Function1<L, B>, success: Function1<A, B>): B {

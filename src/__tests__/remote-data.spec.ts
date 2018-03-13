@@ -1,4 +1,4 @@
-import { pending, failure, success, RemoteData, initial } from './../remote-data';
+import { pending, failure, success, RemoteData, initial, combine } from './../remote-data';
 import { identity, compose } from 'fp-ts/lib/function';
 
 describe('RemoteData', () => {
@@ -105,14 +105,14 @@ describe('RemoteData', () => {
 				expect(initialRD.ap(f)).toBe(initialRD);
 			});
 			it('pending', () => {
-				expect(pendingRD.ap(initial)).toBe(pendingRD);
+				expect(pendingRD.ap(initial)).toBe(initial);
 				expect(pendingRD.ap(pending)).toBe(pendingRD);
 				expect(pendingRD.ap(failedF)).toBe(pendingRD);
 				expect(pendingRD.ap(f)).toBe(pendingRD);
 			});
 			it('failure', () => {
-				expect(failedRD.ap(initial)).toBe(failedRD);
-				expect(failedRD.ap(pending)).toBe(failedRD);
+				expect(failedRD.ap(initial)).toBe(initial);
+				expect(failedRD.ap(pending)).toBe(pending);
 				expect(failedRD.ap(failedF)).toBe(failedF);
 				expect(failedRD.ap(f)).toBe(failedRD);
 			});
@@ -121,6 +121,37 @@ describe('RemoteData', () => {
 				expect(succeededRD.ap(pending)).toBe(pending);
 				expect(succeededRD.ap(failedF)).toBe(failedF);
 				expect(succeededRD.ap(f)).toEqual(success(double(1)));
+			});
+		});
+	});
+	describe('helpers', () => {
+		describe('combine', () => {
+			it('should combine all initials to initial', () => {
+				expect(combine(initial, initial)).toBe(initial);
+			});
+			it('should combine all pendings to pending', () => {
+				expect(combine(pending, pending)).toBe(pending);
+			});
+			it('should combine all failures to first failure', () => {
+				expect(combine(failure('foo'), failure('bar'))).toEqual(failure('foo'));
+			});
+			it('should combine all successes to success of list of values', () => {
+				expect(combine(success('foo'), success('bar'))).toEqual(success(['foo', 'bar']));
+			});
+			it('should combine arbitrary values to first initial', () => {
+				const values = [success(123), success('foo'), failure('bar'), pending, initial];
+				expect(combine.apply(null, values)).toBe(initial);
+				expect(combine.apply(null, values.reverse())).toBe(initial);
+			});
+			it('should combine arbitrary values to first pending', () => {
+				const values = [success(123), success('foo'), failure('bar'), pending];
+				expect(combine.apply(null, values)).toBe(pending);
+				expect(combine.apply(null, values.reverse())).toBe(pending);
+			});
+			it('should combine arbitrary values to first failure', () => {
+				const values = [success(123), success('foo'), failure('bar')];
+				expect(combine.apply(null, values)).toEqual(failure('bar'));
+				expect(combine.apply(null, values.reverse())).toEqual(failure('bar'));
 			});
 		});
 	});

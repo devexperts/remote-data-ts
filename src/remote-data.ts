@@ -139,7 +139,7 @@ export class RemoteFailure<L, A> {
 	}
 
 	ap<B>(fab: RemoteData<L, Function1<A, B>>): RemoteData<L, B> {
-		return fab.isFailure() ? fab : (this as any);
+		return fab.fold(initial, pending, () => fab as any, () => this);
 	}
 
 	chain<B>(f: Function1<A, RemoteData<L, B>>): RemoteData<L, B> {
@@ -239,7 +239,7 @@ export class RemoteSuccess<L, A> {
 	}
 
 	ap<B>(fab: RemoteData<L, Function1<A, B>>): RemoteData<L, B> {
-		return fab.isSuccess() ? this.map(fab.value) : (fab as any);
+		return fab.fold(initial, pending, () => fab as any, value => this.map(value));
 	}
 
 	chain<B>(f: Function1<A, RemoteData<L, B>>): RemoteData<L, B> {
@@ -337,7 +337,7 @@ export class RemotePending<L, A> {
 	}
 
 	ap<B>(fab: RemoteData<L, Function1<A, B>>): RemoteData<L, B> {
-		return pending;
+		return fab.fold(initial, pending as any, () => pending, () => pending);
 	}
 
 	chain<B>(f: Function1<A, RemoteData<L, B>>): RemoteData<L, B> {

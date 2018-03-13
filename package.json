@@ -1,8 +1,8 @@
 {
   "name": "@devexperts/remote-data-ts",
   "version": "0.1.0",
-  "description": "",
-  "main": "index.js",
+  "main": "dist/remote-data.js",
+  "typings": "dist/remote-data.d.ts",
   "scripts": {
     "build": "tsc",
     "test": "npm run tslint && npm run prettier",
@@ -26,5 +26,25 @@
   "peerDependencies": {
     "fp-ts": "^1.1.0",
     "tslib": "^1.9.0"
-  }
+  },
+  "dependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/devex-web-frontend/remote-data-ts.git"
+  },
+  "bugs": {
+    "url": "https://github.com/devex-web-frontend/remote-data-ts/issues"
+  },
+  "homepage": "https://github.com/devex-web-frontend/remote-data-ts#readme",
+  "description": "RemoteData type",
+  "tags": [
+    "typescript",
+    "algebraic-data-types",
+    "functional-programming"
+  ],
+  "keywords": [
+    "typescript",
+    "algebraic-data-types",
+    "functional-programming"
+  ]
 }

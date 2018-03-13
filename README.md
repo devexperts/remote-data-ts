@@ -1,0 +1,1 @@
+# RemoteData type

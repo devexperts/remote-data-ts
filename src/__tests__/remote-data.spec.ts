@@ -1,11 +1,10 @@
-import { pending, failure, success, RemoteData } from './../remote-data';
-import { initial } from '../remote-data';
+import { pending, failure, success, RemoteData, initial } from './../remote-data';
 import { identity, compose } from 'fp-ts/lib/function';
 
 describe('RemoteData', () => {
+	const double = (x: number) => x * 2;
 	describe('Functor', () => {
 		describe('should map over value', () => {
-			const double = (x: number) => x * 2;
 			it('initial', () => {
 				expect(initial.map(double)).toBe(initial);
 			});
@@ -60,6 +59,38 @@ describe('RemoteData', () => {
 					const succeeded = success(value);
 					expect(succeeded.map(quad)).toEqual(success(quad(value)));
 				});
+			});
+		});
+	});
+	describe('Alt', () => {
+		const initialRD: RemoteData<string, number> = initial;
+		const pendingRD: RemoteData<string, number> = pending;
+		const succeededRD: RemoteData<string, number> = success(1);
+		const failedRD: RemoteData<string, number> = failure('foo');
+		describe('should alt', () => {
+			it('initial', () => {
+				expect(initialRD.alt(initialRD)).toBe(initialRD);
+				expect(initialRD.alt(pendingRD)).toBe(pendingRD);
+				expect(initialRD.alt(failedRD)).toBe(failedRD);
+				expect(initialRD.alt(succeededRD)).toBe(succeededRD);
+			});
+			it('pending', () => {
+				expect(pendingRD.alt(initialRD)).toBe(initialRD);
+				expect(pendingRD.alt(pendingRD)).toBe(pendingRD);
+				expect(pendingRD.alt(failedRD)).toBe(failedRD);
+				expect(pendingRD.alt(succeededRD)).toBe(succeededRD);
+			});
+			it('failure', () => {
+				expect(failedRD.alt(pendingRD)).toBe(pendingRD);
+				expect(failedRD.alt(initialRD)).toBe(initialRD);
+				expect(failedRD.alt(failedRD)).toBe(failedRD);
+				expect(failedRD.alt(succeededRD)).toBe(succeededRD);
+			});
+			it('failure', () => {
+				expect(succeededRD.alt(pendingRD)).toBe(succeededRD);
+				expect(succeededRD.alt(initialRD)).toBe(succeededRD);
+				expect(succeededRD.alt(failedRD)).toBe(succeededRD);
+				expect(succeededRD.alt(succeededRD)).toBe(succeededRD);
 			});
 		});
 	});

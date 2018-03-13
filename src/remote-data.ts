@@ -124,6 +124,10 @@ export class RemoteInitial<L, A> {
 	exists(p: Predicate<A>): boolean {
 		return false;
 	}
+
+	swap(): RemoteData<A, L> {
+		return initial;
+	}
 }
 
 export class RemoteFailure<L, A> {
@@ -217,6 +221,10 @@ export class RemoteFailure<L, A> {
 
 	exists(p: Predicate<A>): boolean {
 		return false;
+	}
+
+	swap(): RemoteData<A, L> {
+		return success(this.error);
 	}
 }
 
@@ -314,6 +322,10 @@ export class RemoteSuccess<L, A> {
 	exists(p: Predicate<A>): boolean {
 		return p(this.value);
 	}
+
+	swap(): RemoteData<A, L> {
+		return failure(this.value);
+	}
 }
 
 export class RemotePending<L, A> {
@@ -405,6 +417,10 @@ export class RemotePending<L, A> {
 
 	exists(p: Predicate<A>): boolean {
 		return false;
+	}
+
+	swap(): RemoteData<A, L> {
+		return pending;
 	}
 }
 

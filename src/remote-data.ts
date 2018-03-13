@@ -1,4 +1,4 @@
-import { constFalse, Function2, Function1, Lazy } from "fp-ts/lib/function";
+import { constFalse, Function2, Function1, Lazy, toString } from 'fp-ts/lib/function';
 import { Monad2 } from "fp-ts/lib/Monad";
 import { Foldable2 } from "fp-ts/lib/Foldable";
 import { Alt2 } from "fp-ts/lib/Alt";
@@ -101,6 +101,10 @@ export class RemoteInitial<L, A> {
 	toNullable(): A | null {
 		return null;
 	}
+
+	toString(): string {
+		return 'initial';
+	}
 }
 
 export class RemoteFailure<L, A> {
@@ -178,6 +182,10 @@ export class RemoteFailure<L, A> {
 
 	toNullable(): A | null {
 		return null;
+	}
+
+	toString(): string {
+		return `failure(${toString(this.error)})`
 	}
 }
 
@@ -259,6 +267,10 @@ export class RemoteSuccess<L, A> {
 	toNullable(): A | null {
 		return this.value;
 	}
+
+	toString(): string {
+		return `success(${toString(this.value)})`
+	}
 }
 
 export class RemotePending<L, A> {
@@ -334,6 +346,10 @@ export class RemotePending<L, A> {
 
 	toNullable(): A | null {
 		return null;
+	}
+
+	toString(): string {
+		return 'pending';
 	}
 }
 

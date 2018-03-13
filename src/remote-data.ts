@@ -588,6 +588,13 @@ export function fromEither<L, A>(either: Either<L, A>): RemoteData<L, A> {
 	}
 }
 
+export function fromPredicate<L, A>(
+	predicate: Predicate<A>,
+	whenFalse: Function1<A, L>
+): (a: A) => RemoteData<L, A> {
+	return a => (predicate(a) ? success(a) : failure(whenFalse(a)));
+}
+
 //instance
 export const remoteData: Monad2<URI> &
 	Foldable2<URI> &

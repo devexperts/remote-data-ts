@@ -442,6 +442,16 @@ export class RemotePending<L, A> {
 
 //tslint:enable no-any no-use-before-declare
 
+/**
+ * Represents a value of one of four possible types (a disjoint union)
+ *
+ * An instance of `RemoteData` is either an instance of `RemoteInitial`, `RemotePending`, `RemoteFailure` or `RemoteSuccess`
+ *
+ * A common use of `RemoteData` is as an alternative to `Either` or `Option` supporting initial and pending states (fits best with [RXJS]{@link https://github.com/ReactiveX/rxjs/}).
+ *
+ * @see https://medium.com/@gcanti/slaying-a-ui-antipattern-with-flow-5eed0cfb627b
+ *
+ */
 export type RemoteData<L, A> =
 	| RemoteInitial<L, A>
 	| RemoteFailure<L, A>

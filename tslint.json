@@ -3,6 +3,9 @@
     "dx-lint/tslint.json",
     "tslint-config-prettier"
   ],
+  "rulesDirectory": [
+    "tslint-plugin-prettier"
+  ],
   "rules": {
     "no-namespace": false,
     "prettier": true

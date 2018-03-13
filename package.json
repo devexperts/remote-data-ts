@@ -5,9 +5,10 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "prettier": "prettier --list-different \"./{src,lib}/**/*.{ts,tsx}\"",
-    "prettier:fix": "prettier --write \"./{src,lib}/**/*.{ts,tsx}\""
+    "test": "npm run tslint && npm run prettier",
+    "tslint": "tslint -c tslint.json --project tsconfig.json './src/**/*.ts'",
+    "prettier": "prettier --list-different \"./src/**/*.ts\"",
+    "prettier:fix": "prettier --write \"./src/**/*.ts\""
   },
   "author": "devexperts",
   "license": "ISC",

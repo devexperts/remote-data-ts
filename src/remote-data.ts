@@ -41,6 +41,10 @@ export class RemoteInitial<L, A> {
 		return fy;
 	}
 
+	altL(fy: Lazy<RemoteData<L, A>>): RemoteData<L, A> {
+		return fy();
+	}
+
 	ap<B>(fab: RemoteData<L, Function1<A, B>>): RemoteData<L, B> {
 		return this as any;
 	}
@@ -129,6 +133,10 @@ export class RemoteFailure<L, A> {
 
 	alt(fy: RemoteData<L, A>): RemoteData<L, A> {
 		return fy;
+	}
+
+	altL(fy: Lazy<RemoteData<L, A>>): RemoteData<L, A> {
+		return fy();
 	}
 
 	ap<B>(fab: RemoteData<L, Function1<A, B>>): RemoteData<L, B> {
@@ -221,6 +229,10 @@ export class RemoteSuccess<L, A> {
 		return this;
 	}
 
+	altL(fy: Lazy<RemoteData<L, A>>): RemoteData<L, A> {
+		return this;
+	}
+
 	ap<B>(fab: RemoteData<L, Function1<A, B>>): RemoteData<L, B> {
 		return fab.status === RemoteDataStatus.Success
 			? this.map(fab.value)
@@ -309,6 +321,10 @@ export class RemotePending<L, A> {
 
 	alt(fy: RemoteData<L, A>): RemoteData<L, A> {
 		return fy;
+	}
+
+	altL(fy: Lazy<RemoteData<L, A>>): RemoteData<L, A> {
+		return fy();
 	}
 
 	ap<B>(fab: RemoteData<L, Function1<A, B>>): RemoteData<L, B> {

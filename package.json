@@ -1,5 +1,5 @@
 {
-  "name": "@devexperts/remote-data",
+  "name": "@devexperts/remote-data-ts",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",

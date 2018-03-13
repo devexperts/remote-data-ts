@@ -8,7 +8,8 @@
     "test": "npm run tslint && npm run prettier",
     "tslint": "tslint -c tslint.json --project tsconfig.json './src/**/*.ts'",
     "prettier": "prettier --list-different \"./src/**/*.ts\"",
-    "prettier:fix": "prettier --write \"./src/**/*.ts\""
+    "prettier:fix": "prettier --write \"./src/**/*.ts\"",
+    "prepublish": "npm run test && npm run build"
   },
   "author": "devexperts",
   "license": "ISC",

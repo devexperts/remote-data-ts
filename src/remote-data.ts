@@ -1,4 +1,4 @@
-import { constFalse, Function2, Function1, Lazy, toString } from 'fp-ts/lib/function';
+import { constFalse, Function2, Function1, Lazy, toString, Predicate } from 'fp-ts/lib/function';
 import { Monad2 } from "fp-ts/lib/Monad";
 import { Foldable2 } from "fp-ts/lib/Foldable";
 import { Alt2 } from "fp-ts/lib/Alt";
@@ -109,6 +109,10 @@ export class RemoteInitial<L, A> {
 	contains(S: Setoid<A>, a: A): boolean {
 		return false;
 	}
+
+	exists(p: Predicate<A>): boolean {
+		return false;
+	}
 }
 
 export class RemoteFailure<L, A> {
@@ -193,6 +197,10 @@ export class RemoteFailure<L, A> {
 	}
 
 	contains(S: Setoid<A>, a: A): boolean {
+		return false;
+	}
+
+	exists(p: Predicate<A>): boolean {
 		return false;
 	}
 }
@@ -283,6 +291,10 @@ export class RemoteSuccess<L, A> {
 	contains(S: Setoid<A>, a: A): boolean {
 		return S.equals(this.value, a);
 	}
+
+	exists(p: Predicate<A>): boolean {
+		return p(this.value);
+	}
 }
 
 export class RemotePending<L, A> {
@@ -365,6 +377,10 @@ export class RemotePending<L, A> {
 	}
 
 	contains(S: Setoid<A>, a: A): boolean {
+		return false;
+	}
+
+	exists(p: Predicate<A>): boolean {
 		return false;
 	}
 }

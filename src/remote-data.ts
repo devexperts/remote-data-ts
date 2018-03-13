@@ -1,4 +1,11 @@
-import { constFalse, Function2, Function1, Lazy, toString, Predicate } from 'fp-ts/lib/function';
+import {
+	constFalse,
+	Function2,
+	Function1,
+	Lazy,
+	toString,
+	Predicate
+} from "fp-ts/lib/function";
 import { Monad2 } from "fp-ts/lib/Monad";
 import { Foldable2 } from "fp-ts/lib/Foldable";
 import { Alt2 } from "fp-ts/lib/Alt";
@@ -107,7 +114,7 @@ export class RemoteInitial<L, A> {
 	}
 
 	toString(): string {
-		return 'initial';
+		return "initial";
 	}
 
 	contains(S: Setoid<A>, a: A): boolean {
@@ -201,7 +208,7 @@ export class RemoteFailure<L, A> {
 	}
 
 	toString(): string {
-		return `failure(${toString(this.error)})`
+		return `failure(${toString(this.error)})`;
 	}
 
 	contains(S: Setoid<A>, a: A): boolean {
@@ -297,7 +304,7 @@ export class RemoteSuccess<L, A> {
 	}
 
 	toString(): string {
-		return `success(${toString(this.value)})`
+		return `success(${toString(this.value)})`;
 	}
 
 	contains(S: Setoid<A>, a: A): boolean {
@@ -389,7 +396,7 @@ export class RemotePending<L, A> {
 	}
 
 	toString(): string {
-		return 'pending';
+		return "pending";
 	}
 
 	contains(S: Setoid<A>, a: A): boolean {
@@ -505,7 +512,10 @@ export const isInitial = <L, A>(
 ): data is RemoteInitial<L, A> => data.isInitial();
 
 //Setoid
-export const getSetoid = <A, L>(S: Setoid<A>): Setoid<RemoteData<L, A>> => {
+export const getSetoid = <L, A>(
+	SL: Setoid<L>,
+	SA: Setoid<A>
+): Setoid<RemoteData<L, A>> => {
 	return {
 		equals: (x, y) => {
 			return x.foldL(
@@ -515,12 +525,12 @@ export const getSetoid = <A, L>(S: Setoid<A>): Setoid<RemoteData<L, A>> => {
 					y.foldL(
 						constFalse,
 						constFalse,
-						yError => yError === xError,
+						yError => SL.equals(xError, yError),
 						constFalse
 					),
 				ax =>
 					y.foldL(constFalse, constFalse, constFalse, ay =>
-						S.equals(ax, ay)
+						SA.equals(ax, ay)
 					)
 			);
 		}

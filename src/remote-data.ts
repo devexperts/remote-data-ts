@@ -58,6 +58,10 @@ export class RemoteInitial<L, A> {
 		return initial;
 	}
 
+	fold<B>(initial: B, pending: B, failure: Function1<L, B>, success: Function1<A, B>): B {
+		return initial;
+	}
+
 	foldL<B>(initial: Lazy<B>, pending: Lazy<B>, failure: Function1<L, B>, success: Function1<A, B>): B {
 		return initial();
 	}
@@ -153,6 +157,10 @@ export class RemoteFailure<L, A> {
 
 	extend<B>(f: Function1<RemoteData<L, A>, B>): RemoteData<L, B> {
 		return this as any;
+	}
+
+	fold<B>(initial: B, pending: B, failure: Function1<L, B>, success: Function1<A, B>): B {
+		return failure(this.error);
 	}
 
 	foldL<B>(initial: Lazy<B>, pending: Lazy<B>, failure: Function1<L, B>, success: Function1<A, B>): B {
@@ -252,6 +260,10 @@ export class RemoteSuccess<L, A> {
 		return of(f(this));
 	}
 
+	fold<B>(initial: B, pending: B, failure: Function1<L, B>, success: Function1<A, B>): B {
+		return success(this.value);
+	}
+
 	foldL<B>(initial: Lazy<B>, pending: Lazy<B>, failure: Function1<L, B>, success: Function1<A, B>): B {
 		return success(this.value);
 	}
@@ -344,6 +356,10 @@ export class RemotePending<L, A> {
 	}
 
 	extend<B>(f: Function1<RemoteData<L, A>, B>): RemoteData<L, B> {
+		return pending;
+	}
+
+	fold<B>(initial: B, pending: B, failure: Function1<L, B>, success: Function1<A, B>): B {
 		return pending;
 	}
 

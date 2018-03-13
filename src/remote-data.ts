@@ -81,6 +81,10 @@ export class RemoteInitial<L, A> {
 		return initial;
 	}
 
+	mapLeft<M>(f: (l: L) => M): RemoteData<M, A> {
+		return initial;
+	}
+
 	getOrElse(value: A): A {
 		return value;
 	}
@@ -177,6 +181,10 @@ export class RemoteFailure<L, A> {
 
 	map<B>(f: (a: A) => B): RemoteData<L, B> {
 		return this as any;
+	}
+
+	mapLeft<M>(f: (l: L) => M): RemoteData<M, A> {
+		return failure(f(this.error));
 	}
 
 	getOrElse(value: A): A {
@@ -279,6 +287,10 @@ export class RemoteSuccess<L, A> {
 		return of(f(this.value));
 	}
 
+	mapLeft<M>(f: (l: L) => M): RemoteData<M, A> {
+		return this as any;
+	}
+
 	getOrElse(value: A): A {
 		return this.value;
 	}
@@ -373,6 +385,10 @@ export class RemotePending<L, A> {
 
 	map<B>(f: Function1<A, B>): RemoteData<L, B> {
 		return this as any;
+	}
+
+	mapLeft<M>(f: (l: L) => M): RemoteData<M, A> {
+		return pending;
 	}
 
 	getOrElse(value: A): A {

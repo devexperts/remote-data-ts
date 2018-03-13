@@ -70,7 +70,7 @@ export class RemoteInitial<L, A> {
 		return initial;
 	}
 
-	mapLeft<M>(f: (l: L) => M): RemoteData<M, A> {
+	mapLeft<M>(f: Function1<L, M>): RemoteData<M, A> {
 		return initial;
 	}
 
@@ -167,7 +167,7 @@ export class RemoteFailure<L, A> {
 		return this as any;
 	}
 
-	mapLeft<M>(f: (l: L) => M): RemoteData<M, A> {
+	mapLeft<M>(f: Function1<L, M>): RemoteData<M, A> {
 		return failure(f(this.error));
 	}
 
@@ -264,7 +264,7 @@ export class RemoteSuccess<L, A> {
 		return of(f(this.value));
 	}
 
-	mapLeft<M>(f: (l: L) => M): RemoteData<M, A> {
+	mapLeft<M>(f: Function1<L, M>): RemoteData<M, A> {
 		return this as any;
 	}
 
@@ -359,7 +359,7 @@ export class RemotePending<L, A> {
 		return this as any;
 	}
 
-	mapLeft<M>(f: (l: L) => M): RemoteData<M, A> {
+	mapLeft<M>(f: Function1<L, M>): RemoteData<M, A> {
 		return pending;
 	}
 
@@ -459,7 +459,7 @@ function traverse<F>(
 const alt = <L, A>(fx: RemoteData<L, A>, fy: RemoteData<L, A>): RemoteData<L, A> => fx.alt(fy);
 
 //Extend
-const extend = <L, A, B>(fla: RemoteData<L, A>, f: (fla: RemoteData<L, A>) => B): RemoteData<L, B> => fla.extend(f);
+const extend = <L, A, B>(fla: RemoteData<L, A>, f: Function1<RemoteData<L, A>, B>): RemoteData<L, B> => fla.extend(f);
 
 //constructors
 export const failure = <L, A>(error: L): RemoteFailure<L, A> => new RemoteFailure(error);
@@ -503,7 +503,10 @@ export function fromEither<L, A>(either: Either<L, A>): RemoteData<L, A> {
 	}
 }
 
-export function fromPredicate<L, A>(predicate: Predicate<A>, whenFalse: Function1<A, L>): (a: A) => RemoteData<L, A> {
+export function fromPredicate<L, A>(
+	predicate: Predicate<A>,
+	whenFalse: Function1<A, L>,
+): Function1<A, RemoteData<L, A>> {
 	return a => (predicate(a) ? success(a) : failure(whenFalse(a)));
 }
 

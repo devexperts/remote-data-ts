@@ -468,9 +468,6 @@ function traverse<F>(
 //Alt
 const alt = <L, A>(fx: RemoteData<L, A>, fy: RemoteData<L, A>): RemoteData<L, A> => fx.alt(fy);
 
-//Alternative
-const zero = <L, A>(): RemoteData<L, A> => initial;
-
 //Extend
 const extend = <L, A, B>(fla: RemoteData<L, A>, f: Function1<RemoteData<L, A>, B>): RemoteData<L, B> => fla.extend(f);
 
@@ -479,6 +476,9 @@ export const failure = <L, A>(error: L): RemoteFailure<L, A> => new RemoteFailur
 export const success: <L, A>(value: A) => RemoteSuccess<L, A> = of;
 export const pending: RemotePending<never, never> = new RemotePending<never, never>();
 export const initial: RemoteInitial<never, never> = new RemoteInitial<never, never>();
+
+//Alternative
+const zero = <L, A>(): RemoteData<L, A> => initial;
 
 //filters
 export const isFailure = <L, A>(data: RemoteData<L, A>): data is RemoteFailure<L, A> => data.isFailure();

@@ -13,6 +13,8 @@ import { array } from 'fp-ts/lib/Array';
 import { HKT, HKT2, Type, Type2, URIS, URIS2 } from 'fp-ts/lib/HKT';
 import { Applicative } from 'fp-ts/lib/Applicative';
 import { Alternative2 } from 'fp-ts/lib/Alternative';
+import { Ord } from 'fp-ts/lib/Ord';
+import { sign } from 'fp-ts/lib/Ordering';
 
 export const URI = 'RemoteData';
 export type URI = typeof URI;
@@ -485,14 +487,29 @@ export const isInitial = <L, A>(data: RemoteData<L, A>): data is RemoteInitial<L
 //Setoid
 export const getSetoid = <L, A>(SL: Setoid<L>, SA: Setoid<A>): Setoid<RemoteData<L, A>> => {
 	return {
-		equals: (x, y) => {
-			return x.foldL(
+		equals: (x, y) =>
+			x.foldL(
 				() => y.isInitial(),
 				() => y.isPending(),
 				xError => y.foldL(constFalse, constFalse, yError => SL.equals(xError, yError), constFalse),
 				ax => y.foldL(constFalse, constFalse, constFalse, ay => SA.equals(ax, ay)),
-			);
-		},
+			),
+	};
+};
+
+//Ord
+export const getOrd = <L, A>(OL: Ord<L>, OA: Ord<A>): Ord<RemoteData<L, A>> => {
+	return {
+		...getSetoid(OL, OA),
+		compare: (x, y) =>
+			sign(
+				x.foldL(
+					() => y.fold(0, -1, () => -1, () => -1),
+					() => y.fold(1, 0, () => -1, () => -1),
+					xError => y.fold(1, 1, yError => OL.compare(xError, yError), () => -1),
+					xValue => y.fold(1, 1, () => 1, yValue => OA.compare(xValue, yValue)),
+				),
+			),
 	};
 };
 

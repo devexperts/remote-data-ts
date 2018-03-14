@@ -504,5 +504,61 @@ describe('RemoteData', () => {
 				expect(successRD.mapLeft(f2)).toBe(successRD);
 			});
 		});
+		describe('isInitial', () => {
+			it('initial', () => {
+				expect(initialRD.isInitial()).toBe(true);
+			});
+			it('pending', () => {
+				expect(pendingRD.isInitial()).toBe(false);
+			});
+			it('failure', () => {
+				expect(failureRD.isInitial()).toEqual(false);
+			});
+			it('success', () => {
+				expect(successRD.isInitial()).toBe(false);
+			});
+		});
+		describe('isPending', () => {
+			it('initial', () => {
+				expect(initialRD.isPending()).toBe(false);
+			});
+			it('pending', () => {
+				expect(pendingRD.isPending()).toBe(true);
+			});
+			it('failure', () => {
+				expect(failureRD.isPending()).toEqual(false);
+			});
+			it('success', () => {
+				expect(successRD.isPending()).toBe(false);
+			});
+		});
+		describe('isFailure', () => {
+			it('initial', () => {
+				expect(initialRD.isFailure()).toBe(false);
+			});
+			it('pending', () => {
+				expect(pendingRD.isFailure()).toBe(false);
+			});
+			it('failure', () => {
+				expect(failureRD.isFailure()).toEqual(true);
+			});
+			it('success', () => {
+				expect(successRD.isFailure()).toBe(false);
+			});
+		});
+		describe('isSuccess', () => {
+			it('initial', () => {
+				expect(initialRD.isSuccess()).toBe(false);
+			});
+			it('pending', () => {
+				expect(pendingRD.isSuccess()).toBe(false);
+			});
+			it('failure', () => {
+				expect(failureRD.isSuccess()).toEqual(false);
+			});
+			it('success', () => {
+				expect(successRD.isSuccess()).toBe(true);
+			});
+		});
 	});
 });

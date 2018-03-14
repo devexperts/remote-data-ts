@@ -566,5 +566,33 @@ describe('RemoteData', () => {
 				}
 			});
 		});
+		describe('toOption', () => {
+			it('initial', () => {
+				expect(initialRD.toOption()).toBe(none);
+			});
+			it('pending', () => {
+				expect(pendingRD.toOption()).toBe(none);
+			});
+			it('failure', () => {
+				expect(failureRD.toOption()).toBe(none);
+			});
+			it('success', () => {
+				expect(success(1).toOption()).toEqual(some(1));
+			});
+		});
+		describe('toNullable', () => {
+			it('initial', () => {
+				expect(initialRD.toNullable()).toBe(null);
+			});
+			it('pending', () => {
+				expect(pendingRD.toNullable()).toBe(null);
+			});
+			it('failure', () => {
+				expect(failureRD.toNullable()).toBe(null);
+			});
+			it('success', () => {
+				expect(success(1).toNullable()).toEqual(1);
+			});
+		});
 	});
 });

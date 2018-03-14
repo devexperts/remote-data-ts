@@ -152,6 +152,23 @@ describe('RemoteData', () => {
 			});
 		});
 	});
+	describe('Extend', () => {
+		describe('extend', () => {
+			const f = () => 1;
+			it('initial', () => {
+				expect(initialRD.extend(f)).toBe(initialRD);
+			});
+			it('pending', () => {
+				expect(pendingRD.extend(f)).toBe(pendingRD);
+			});
+			it('failure', () => {
+				expect(failedRD.extend(f)).toBe(failedRD);
+			});
+			it('pending', () => {
+				expect(succeededRD.extend(f)).toEqual(success(1));
+			});
+		});
+	});
 	describe('helpers', () => {
 		describe('combine', () => {
 			it('should combine all initials to initial', () => {

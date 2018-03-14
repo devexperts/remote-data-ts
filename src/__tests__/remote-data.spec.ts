@@ -1,8 +1,9 @@
-import { pending, failure, success, RemoteData, initial, combine, remoteData } from '../remote-data';
+import { pending, failure, success, RemoteData, initial, combine, remoteData, getSetoid } from '../remote-data';
 import { identity, compose } from 'fp-ts/lib/function';
 import { sequence, traverse } from 'fp-ts/lib/Traversable';
 import { none, option, some } from 'fp-ts/lib/Option';
 import { array } from 'fp-ts/lib/Array';
+import { setoidNumber, setoidString } from 'fp-ts/lib/Setoid';
 
 describe('RemoteData', () => {
 	const double = (x: number) => x * 2;
@@ -228,6 +229,37 @@ describe('RemoteData', () => {
 	describe('Alternative', () => {
 		it('zero', () => {
 			expect(remoteData.zero()).toBe(initial);
+		});
+	});
+	describe('Setoid', () => {
+		describe('getSetoid', () => {
+			const equals = getSetoid(setoidString, setoidNumber).equals;
+			it('initial', () => {
+				expect(equals(initialRD, initialRD)).toBe(true);
+				expect(equals(initialRD, pendingRD)).toBe(false);
+				expect(equals(initialRD, failureRD)).toBe(false);
+				expect(equals(initialRD, successRD)).toBe(false);
+			});
+			it('pending', () => {
+				expect(equals(pendingRD, initialRD)).toBe(false);
+				expect(equals(pendingRD, pendingRD)).toBe(true);
+				expect(equals(pendingRD, failureRD)).toBe(false);
+				expect(equals(pendingRD, successRD)).toBe(false);
+			});
+			it('failure', () => {
+				expect(equals(failureRD, initialRD)).toBe(false);
+				expect(equals(failureRD, pendingRD)).toBe(false);
+				expect(equals(failureRD, failureRD)).toBe(true);
+				expect(equals(failure('1'), failure('2'))).toBe(false);
+				expect(equals(failureRD, successRD)).toBe(false);
+			});
+			it('success', () => {
+				expect(equals(successRD, initialRD)).toBe(false);
+				expect(equals(successRD, pendingRD)).toBe(false);
+				expect(equals(successRD, failureRD)).toBe(false);
+				expect(equals(successRD, successRD)).toBe(true);
+				expect(equals(success(1), success(2))).toBe(false);
+			});
 		});
 	});
 	describe('helpers', () => {

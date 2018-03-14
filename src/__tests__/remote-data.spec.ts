@@ -12,6 +12,7 @@ import {
 	getMonoid,
 	fromOption,
 	fromEither,
+	fromPredicate,
 } from '../remote-data';
 import { identity, compose } from 'fp-ts/lib/function';
 import { sequence, traverse } from 'fp-ts/lib/Traversable';
@@ -393,6 +394,15 @@ describe('RemoteData', () => {
 			});
 			it('right', () => {
 				expect(fromEither(right('123'))).toEqual(success('123'));
+			});
+		});
+		describe('fromPredicate', () => {
+			const factory = fromPredicate((value: boolean) => value, () => '123');
+			it('false', () => {
+				expect(factory(false)).toEqual(failure('123'));
+			});
+			it('true', () => {
+				expect(factory(true)).toEqual(success(true));
 			});
 		});
 	});

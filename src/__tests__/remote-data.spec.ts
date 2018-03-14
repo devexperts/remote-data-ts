@@ -421,7 +421,7 @@ describe('RemoteData', () => {
 				expect(success(1).getOrElse(0)).toBe(1);
 			});
 		});
-		describe('getOrElseValue', () => {
+		describe('getOrElseL', () => {
 			it('initial', () => {
 				expect(initialRD.getOrElseL(() => 0)).toBe(0);
 			});

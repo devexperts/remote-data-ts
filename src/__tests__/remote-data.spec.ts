@@ -326,5 +326,33 @@ describe('RemoteData', () => {
 				expect(combine.apply(null, values.reverse())).toEqual(failure('bar'));
 			});
 		});
+		describe('getOrElse', () => {
+			it('initial', () => {
+				expect(initialRD.getOrElse(0)).toBe(0);
+			});
+			it('pending', () => {
+				expect(pendingRD.getOrElse(0)).toBe(0);
+			});
+			it('failure', () => {
+				expect(failureRD.getOrElse(0)).toBe(0);
+			});
+			it('success', () => {
+				expect(success(1).getOrElse(0)).toBe(1);
+			});
+		});
+		describe('getOrElseValue', () => {
+			it('initial', () => {
+				expect(initialRD.getOrElseL(() => 0)).toBe(0);
+			});
+			it('pending', () => {
+				expect(pendingRD.getOrElseL(() => 0)).toBe(0);
+			});
+			it('failure', () => {
+				expect(failureRD.getOrElseL(() => 0)).toBe(0);
+			});
+			it('success', () => {
+				expect(success(1).getOrElseL(() => 0)).toBe(1);
+			});
+		});
 	});
 });

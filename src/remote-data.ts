@@ -39,15 +39,15 @@ export class RemoteInitial<L, A> {
 	}
 
 	ap<B>(fab: RemoteData<L, Function1<A, B>>): RemoteData<L, B> {
-		return initial;
+		return initial; //tslint:disable-line no-use-before-declare
 	}
 
 	chain<B>(f: Function1<A, RemoteData<L, B>>): RemoteData<L, B> {
-		return initial;
+		return initial; //tslint:disable-line no-use-before-declare
 	}
 
 	extend<B>(f: Function1<RemoteData<L, A>, B>): RemoteData<L, B> {
-		return initial;
+		return initial; //tslint:disable-line no-use-before-declare
 	}
 
 	fold<B>(initial: B, pending: B, failure: Function1<L, B>, success: Function1<A, B>): B {
@@ -63,11 +63,11 @@ export class RemoteInitial<L, A> {
 	}
 
 	map<B>(f: Function1<A, B>): RemoteData<L, B> {
-		return initial;
+		return initial; //tslint:disable-line no-use-before-declare
 	}
 
 	mapLeft<M>(f: Function1<L, M>): RemoteData<M, A> {
-		return initial;
+		return initial; //tslint:disable-line no-use-before-declare
 	}
 
 	getOrElse(value: A): A {
@@ -115,7 +115,7 @@ export class RemoteInitial<L, A> {
 	}
 
 	swap(): RemoteData<A, L> {
-		return initial;
+		return initial; //tslint:disable-line no-use-before-declare
 	}
 }
 
@@ -139,7 +139,7 @@ export class RemoteFailure<L, A> {
 	}
 
 	ap<B>(fab: RemoteData<L, Function1<A, B>>): RemoteData<L, B> {
-		return fab.fold(initial, pending, () => fab as any, () => this);
+		return fab.fold(initial, pending, () => fab as any, () => this); //tslint:disable-line no-use-before-declare
 	}
 
 	chain<B>(f: Function1<A, RemoteData<L, B>>): RemoteData<L, B> {
@@ -167,7 +167,7 @@ export class RemoteFailure<L, A> {
 	}
 
 	mapLeft<M>(f: Function1<L, M>): RemoteData<M, A> {
-		return failure(f(this.error));
+		return failure(f(this.error)); //tslint:disable-line no-use-before-declare
 	}
 
 	getOrElse(value: A): A {
@@ -215,7 +215,7 @@ export class RemoteFailure<L, A> {
 	}
 
 	swap(): RemoteData<A, L> {
-		return success(this.error);
+		return success(this.error); //tslint:disable-line no-use-before-declare
 	}
 }
 
@@ -239,7 +239,7 @@ export class RemoteSuccess<L, A> {
 	}
 
 	ap<B>(fab: RemoteData<L, Function1<A, B>>): RemoteData<L, B> {
-		return fab.fold(initial, pending, () => fab as any, value => this.map(value));
+		return fab.fold(initial, pending, () => fab as any, value => this.map(value)); //tslint:disable-line no-use-before-declare
 	}
 
 	chain<B>(f: Function1<A, RemoteData<L, B>>): RemoteData<L, B> {
@@ -247,7 +247,7 @@ export class RemoteSuccess<L, A> {
 	}
 
 	extend<B>(f: Function1<RemoteData<L, A>, B>): RemoteData<L, B> {
-		return of(f(this));
+		return of(f(this)); //tslint:disable-line no-use-before-declare
 	}
 
 	fold<B>(initial: B, pending: B, failure: Function1<L, B>, success: Function1<A, B>): B {
@@ -263,7 +263,7 @@ export class RemoteSuccess<L, A> {
 	}
 
 	map<B>(f: Function1<A, B>): RemoteData<L, B> {
-		return of(f(this.value));
+		return of(f(this.value)); //tslint:disable-line no-use-before-declare
 	}
 
 	mapLeft<M>(f: Function1<L, M>): RemoteData<M, A> {
@@ -315,7 +315,7 @@ export class RemoteSuccess<L, A> {
 	}
 
 	swap(): RemoteData<A, L> {
-		return failure(this.value);
+		return failure(this.value); //tslint:disable-line no-use-before-declare
 	}
 }
 
@@ -337,15 +337,15 @@ export class RemotePending<L, A> {
 	}
 
 	ap<B>(fab: RemoteData<L, Function1<A, B>>): RemoteData<L, B> {
-		return fab.fold(initial, pending as any, () => pending, () => pending);
+		return fab.fold(initial, pending as any, () => pending, () => pending); //tslint:disable-line no-use-before-declare
 	}
 
 	chain<B>(f: Function1<A, RemoteData<L, B>>): RemoteData<L, B> {
-		return pending;
+		return pending; //tslint:disable-line no-use-before-declare
 	}
 
 	extend<B>(f: Function1<RemoteData<L, A>, B>): RemoteData<L, B> {
-		return pending;
+		return pending; //tslint:disable-line no-use-before-declare
 	}
 
 	fold<B>(initial: B, pending: B, failure: Function1<L, B>, success: Function1<A, B>): B {
@@ -365,7 +365,7 @@ export class RemotePending<L, A> {
 	}
 
 	mapLeft<M>(f: Function1<L, M>): RemoteData<M, A> {
-		return pending;
+		return pending; //tslint:disable-line no-use-before-declare
 	}
 
 	getOrElse(value: A): A {
@@ -413,7 +413,7 @@ export class RemotePending<L, A> {
 	}
 
 	swap(): RemoteData<A, L> {
-		return pending;
+		return pending; //tslint:disable-line no-use-before-declare
 	}
 }
 

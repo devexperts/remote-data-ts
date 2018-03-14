@@ -1,10 +1,22 @@
-import { pending, failure, success, RemoteData, initial, combine, remoteData, getSetoid, getOrd } from '../remote-data';
+import {
+	pending,
+	failure,
+	success,
+	RemoteData,
+	initial,
+	combine,
+	remoteData,
+	getSetoid,
+	getOrd,
+	getSemigroup,
+} from '../remote-data';
 import { identity, compose } from 'fp-ts/lib/function';
 import { sequence, traverse } from 'fp-ts/lib/Traversable';
 import { none, option, some } from 'fp-ts/lib/Option';
 import { array } from 'fp-ts/lib/Array';
 import { setoidNumber, setoidString } from 'fp-ts/lib/Setoid';
 import { ordNumber, ordString } from 'fp-ts/lib/Ord';
+import { semigroupString, semigroupSum } from 'fp-ts/lib/Semigroup';
 
 describe('RemoteData', () => {
 	const double = (x: number) => x * 2;
@@ -293,6 +305,35 @@ describe('RemoteData', () => {
 				expect(compare(successRD, successRD)).toBe(0);
 				expect(compare(success(1), success(2))).toBe(-1);
 				expect(compare(success(2), success(1))).toBe(1);
+			});
+		});
+	});
+	describe('Semigroup', () => {
+		describe('getSemigroup', () => {
+			const concat = getSemigroup(semigroupString, semigroupSum).concat;
+			it('initial', () => {
+				expect(concat(initialRD, initialRD)).toBe(initialRD);
+				expect(concat(initialRD, pendingRD)).toBe(pendingRD);
+				expect(concat(initialRD, failureRD)).toBe(failureRD);
+				expect(concat(initialRD, successRD)).toBe(successRD);
+			});
+			it('pending', () => {
+				expect(concat(pendingRD, initialRD)).toBe(pendingRD);
+				expect(concat(pendingRD, pendingRD)).toBe(pendingRD);
+				expect(concat(pendingRD, failureRD)).toBe(failureRD);
+				expect(concat(pendingRD, successRD)).toBe(successRD);
+			});
+			it('failure', () => {
+				expect(concat(failureRD, initialRD)).toBe(failureRD);
+				expect(concat(failureRD, pendingRD)).toBe(failureRD);
+				expect(concat(failure('foo'), failure('bar'))).toEqual(failure(semigroupString.concat('foo', 'bar')));
+				expect(concat(failureRD, successRD)).toBe(successRD);
+			});
+			it('success', () => {
+				expect(concat(successRD, initialRD)).toBe(successRD);
+				expect(concat(successRD, pendingRD)).toBe(successRD);
+				expect(concat(successRD, failureRD)).toBe(successRD);
+				expect(concat(success(1), success(1))).toEqual(success(semigroupSum.concat(1, 1)));
 			});
 		});
 	});

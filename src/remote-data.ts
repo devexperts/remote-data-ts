@@ -15,6 +15,7 @@ import { Applicative } from 'fp-ts/lib/Applicative';
 import { Alternative2 } from 'fp-ts/lib/Alternative';
 import { Ord } from 'fp-ts/lib/Ord';
 import { sign } from 'fp-ts/lib/Ordering';
+import { Semigroup } from 'fp-ts/lib/Semigroup';
 
 export const URI = 'RemoteData';
 export type URI = typeof URI;
@@ -510,6 +511,21 @@ export const getOrd = <L, A>(OL: Ord<L>, OA: Ord<A>): Ord<RemoteData<L, A>> => {
 					xValue => y.fold(1, 1, () => 1, yValue => OA.compare(xValue, yValue)),
 				),
 			),
+	};
+};
+
+//Semigroup
+export const getSemigroup = <L, A>(SL: Semigroup<L>, SA: Semigroup<A>): Semigroup<RemoteData<L, A>> => {
+	return {
+		concat: (x, y) => {
+			return x.foldL(
+				() => y.fold(y, y, () => y, () => y),
+				() => y.fold(x, y, () => y, () => y),
+
+				xError => y.fold(x, x, yError => failure(SL.concat(xError, yError)), () => y),
+				xValue => y.fold(x, x, () => x, yValue => success(SA.concat(xValue, yValue))),
+			);
+		},
 	};
 };
 

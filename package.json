@@ -10,7 +10,7 @@
     "jest": "jest",
     "prettier": "prettier --list-different \"./src/**/*.ts\"",
     "prettier:fix": "prettier --write \"./src/**/*.ts\"",
-    "prepublish": "npm run test && npm run build"
+    "prepublishOnly": "npm run test && npm run build"
   },
   "author": "devexperts",
   "license": "MPL-2.0",

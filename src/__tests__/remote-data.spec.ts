@@ -1,5 +1,7 @@
-import { pending, failure, success, RemoteData, initial, combine } from '../remote-data';
+import { pending, failure, success, RemoteData, initial, combine, remoteData } from '../remote-data';
 import { identity, compose } from 'fp-ts/lib/function';
+import { traverse } from 'fp-ts/lib/Traversable';
+import { none, option, some } from 'fp-ts/lib/Option';
 
 describe('RemoteData', () => {
 	const double = (x: number) => x * 2;
@@ -166,6 +168,25 @@ describe('RemoteData', () => {
 			});
 			it('pending', () => {
 				expect(successRD.extend(f)).toEqual(success(1));
+			});
+		});
+	});
+	describe('Traversable', () => {
+		describe('traverse', () => {
+			const t = traverse(option, remoteData);
+			const f = (x: number) => (x >= 2 ? some(x) : none);
+			it('initial', () => {
+				expect(t(initialRD, f)).toEqual(some(initialRD));
+			});
+			it('pending', () => {
+				expect(t(pendingRD, f)).toEqual(some(pendingRD));
+			});
+			it('failure', () => {
+				expect(t(failureRD, f)).toEqual(some(failureRD));
+			});
+			it('success', () => {
+				expect(t(success(1), f)).toBe(none);
+				expect(t(success(3), f)).toEqual(some(success(3)));
 			});
 		});
 	});

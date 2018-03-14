@@ -1,4 +1,4 @@
-import { pending, failure, success, RemoteData, initial, combine, remoteData } from './../remote-data';
+import { pending, failure, success, RemoteData, initial, combine } from '../remote-data';
 import { identity, compose } from 'fp-ts/lib/function';
 
 describe('RemoteData', () => {

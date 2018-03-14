@@ -10,6 +10,7 @@ import {
 	getOrd,
 	getSemigroup,
 	getMonoid,
+	fromOption,
 } from '../remote-data';
 import { identity, compose } from 'fp-ts/lib/function';
 import { sequence, traverse } from 'fp-ts/lib/Traversable';
@@ -373,6 +374,15 @@ describe('RemoteData', () => {
 				const values = [success(123), success('foo'), failure('bar')];
 				expect(combine.apply(null, values)).toEqual(failure('bar'));
 				expect(combine.apply(null, values.reverse())).toEqual(failure('bar'));
+			});
+		});
+		describe('fromOption', () => {
+			const error = new Error('foo');
+			it('none', () => {
+				expect(fromOption(none, () => error)).toEqual(failure(error));
+			});
+			it('some', () => {
+				expect(fromOption(some(123), () => error)).toEqual(success(123));
 			});
 		});
 	});

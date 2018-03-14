@@ -208,6 +208,23 @@ describe('RemoteData', () => {
 			});
 		});
 	});
+	describe('Foldable', () => {
+		describe('reduce', () => {
+			const f = (a: number, b: number) => a + b;
+			it('initial', () => {
+				expect(initialRD.reduce(f, 1)).toBe(1);
+			});
+			it('pending', () => {
+				expect(pendingRD.reduce(f, 1)).toBe(1);
+			});
+			it('failure', () => {
+				expect(failureRD.reduce(f, 1)).toBe(1);
+			});
+			it('failure', () => {
+				expect(success(1).reduce(f, 1)).toBe(2);
+			});
+		});
+	});
 	describe('helpers', () => {
 		describe('combine', () => {
 			it('should combine all initials to initial', () => {

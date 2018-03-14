@@ -375,6 +375,8 @@ describe('RemoteData', () => {
 				expect(combine.apply(null, values.reverse())).toEqual(failure('bar'));
 			});
 		});
+	});
+	describe('instance methods', () => {
 		describe('getOrElse', () => {
 			it('initial', () => {
 				expect(initialRD.getOrElse(0)).toBe(0);

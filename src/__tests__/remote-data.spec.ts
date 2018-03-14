@@ -5,8 +5,8 @@ describe('RemoteData', () => {
 	const double = (x: number) => x * 2;
 	const initialRD: RemoteData<string, number> = initial;
 	const pendingRD: RemoteData<string, number> = pending;
-	const succeededRD: RemoteData<string, number> = success(1);
-	const failedRD: RemoteData<string, number> = failure('foo');
+	const successRD: RemoteData<string, number> = success(1);
+	const failureRD: RemoteData<string, number> = failure('foo');
 	describe('Functor', () => {
 		describe('should map over value', () => {
 			it('initial', () => {
@@ -71,26 +71,26 @@ describe('RemoteData', () => {
 			it('initial', () => {
 				expect(initialRD.alt(initialRD)).toBe(initialRD);
 				expect(initialRD.alt(pendingRD)).toBe(pendingRD);
-				expect(initialRD.alt(failedRD)).toBe(failedRD);
-				expect(initialRD.alt(succeededRD)).toBe(succeededRD);
+				expect(initialRD.alt(failureRD)).toBe(failureRD);
+				expect(initialRD.alt(successRD)).toBe(successRD);
 			});
 			it('pending', () => {
 				expect(pendingRD.alt(initialRD)).toBe(initialRD);
 				expect(pendingRD.alt(pendingRD)).toBe(pendingRD);
-				expect(pendingRD.alt(failedRD)).toBe(failedRD);
-				expect(pendingRD.alt(succeededRD)).toBe(succeededRD);
+				expect(pendingRD.alt(failureRD)).toBe(failureRD);
+				expect(pendingRD.alt(successRD)).toBe(successRD);
 			});
 			it('failure', () => {
-				expect(failedRD.alt(pendingRD)).toBe(pendingRD);
-				expect(failedRD.alt(initialRD)).toBe(initialRD);
-				expect(failedRD.alt(failedRD)).toBe(failedRD);
-				expect(failedRD.alt(succeededRD)).toBe(succeededRD);
+				expect(failureRD.alt(pendingRD)).toBe(pendingRD);
+				expect(failureRD.alt(initialRD)).toBe(initialRD);
+				expect(failureRD.alt(failureRD)).toBe(failureRD);
+				expect(failureRD.alt(successRD)).toBe(successRD);
 			});
 			it('failure', () => {
-				expect(succeededRD.alt(pendingRD)).toBe(succeededRD);
-				expect(succeededRD.alt(initialRD)).toBe(succeededRD);
-				expect(succeededRD.alt(failedRD)).toBe(succeededRD);
-				expect(succeededRD.alt(succeededRD)).toBe(succeededRD);
+				expect(successRD.alt(pendingRD)).toBe(successRD);
+				expect(successRD.alt(initialRD)).toBe(successRD);
+				expect(successRD.alt(failureRD)).toBe(successRD);
+				expect(successRD.alt(successRD)).toBe(successRD);
 			});
 		});
 	});
@@ -111,16 +111,16 @@ describe('RemoteData', () => {
 				expect(pendingRD.ap(f)).toBe(pendingRD);
 			});
 			it('failure', () => {
-				expect(failedRD.ap(initial)).toBe(initial);
-				expect(failedRD.ap(pending)).toBe(pending);
-				expect(failedRD.ap(failedF)).toBe(failedF);
-				expect(failedRD.ap(f)).toBe(failedRD);
+				expect(failureRD.ap(initial)).toBe(initial);
+				expect(failureRD.ap(pending)).toBe(pending);
+				expect(failureRD.ap(failedF)).toBe(failedF);
+				expect(failureRD.ap(f)).toBe(failureRD);
 			});
 			it('success', () => {
-				expect(succeededRD.ap(initial)).toBe(initial);
-				expect(succeededRD.ap(pending)).toBe(pending);
-				expect(succeededRD.ap(failedF)).toBe(failedF);
-				expect(succeededRD.ap(f)).toEqual(success(double(1)));
+				expect(successRD.ap(initial)).toBe(initial);
+				expect(successRD.ap(pending)).toBe(pending);
+				expect(successRD.ap(failedF)).toBe(failedF);
+				expect(successRD.ap(f)).toEqual(success(double(1)));
 			});
 		});
 	});
@@ -129,26 +129,26 @@ describe('RemoteData', () => {
 			it('initial', () => {
 				expect(initialRD.chain(() => initialRD)).toBe(initialRD);
 				expect(initialRD.chain(() => pendingRD)).toBe(initialRD);
-				expect(initialRD.chain(() => failedRD)).toBe(initialRD);
-				expect(initialRD.chain(() => succeededRD)).toBe(initialRD);
+				expect(initialRD.chain(() => failureRD)).toBe(initialRD);
+				expect(initialRD.chain(() => successRD)).toBe(initialRD);
 			});
 			it('pending', () => {
 				expect(pendingRD.chain(() => initialRD)).toBe(pendingRD);
 				expect(pendingRD.chain(() => pendingRD)).toBe(pendingRD);
-				expect(pendingRD.chain(() => failedRD)).toBe(pendingRD);
-				expect(pendingRD.chain(() => succeededRD)).toBe(pendingRD);
+				expect(pendingRD.chain(() => failureRD)).toBe(pendingRD);
+				expect(pendingRD.chain(() => successRD)).toBe(pendingRD);
 			});
 			it('failure', () => {
-				expect(failedRD.chain(() => initialRD)).toBe(failedRD);
-				expect(failedRD.chain(() => pendingRD)).toBe(failedRD);
-				expect(failedRD.chain(() => failedRD)).toBe(failedRD);
-				expect(failedRD.chain(() => succeededRD)).toBe(failedRD);
+				expect(failureRD.chain(() => initialRD)).toBe(failureRD);
+				expect(failureRD.chain(() => pendingRD)).toBe(failureRD);
+				expect(failureRD.chain(() => failureRD)).toBe(failureRD);
+				expect(failureRD.chain(() => successRD)).toBe(failureRD);
 			});
 			it('success', () => {
-				expect(succeededRD.chain(() => initialRD)).toBe(initialRD);
-				expect(succeededRD.chain(() => pendingRD)).toBe(pendingRD);
-				expect(succeededRD.chain(() => failedRD)).toBe(failedRD);
-				expect(succeededRD.chain(() => succeededRD)).toBe(succeededRD);
+				expect(successRD.chain(() => initialRD)).toBe(initialRD);
+				expect(successRD.chain(() => pendingRD)).toBe(pendingRD);
+				expect(successRD.chain(() => failureRD)).toBe(failureRD);
+				expect(successRD.chain(() => successRD)).toBe(successRD);
 			});
 		});
 	});
@@ -162,10 +162,10 @@ describe('RemoteData', () => {
 				expect(pendingRD.extend(f)).toBe(pendingRD);
 			});
 			it('failure', () => {
-				expect(failedRD.extend(f)).toBe(failedRD);
+				expect(failureRD.extend(f)).toBe(failureRD);
 			});
 			it('pending', () => {
-				expect(succeededRD.extend(f)).toEqual(success(1));
+				expect(successRD.extend(f)).toEqual(success(1));
 			});
 		});
 	});

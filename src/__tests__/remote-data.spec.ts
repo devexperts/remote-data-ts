@@ -1,7 +1,8 @@
 import { pending, failure, success, RemoteData, initial, combine, remoteData } from '../remote-data';
 import { identity, compose } from 'fp-ts/lib/function';
-import { traverse } from 'fp-ts/lib/Traversable';
+import { sequence, traverse } from 'fp-ts/lib/Traversable';
 import { none, option, some } from 'fp-ts/lib/Option';
+import { array } from 'fp-ts/lib/Array';
 
 describe('RemoteData', () => {
 	const double = (x: number) => x * 2;
@@ -123,6 +124,23 @@ describe('RemoteData', () => {
 				expect(successRD.ap(pending)).toBe(pending);
 				expect(successRD.ap(failedF)).toBe(failedF);
 				expect(successRD.ap(f)).toEqual(success(double(1)));
+			});
+		});
+	});
+	describe('Applicative', () => {
+		describe('sequence', () => {
+			const s = sequence(remoteData, array);
+			it('initial', () => {
+				expect(s([initialRD, successRD])).toBe(initialRD);
+			});
+			it('pending', () => {
+				expect(s([pendingRD, successRD])).toBe(pendingRD);
+			});
+			it('failure', () => {
+				expect(s([failureRD, successRD])).toBe(failureRD);
+			});
+			it('success', () => {
+				expect(s([success(123), success(456)])).toEqual(success([123, 456]));
 			});
 		});
 	});

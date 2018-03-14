@@ -489,5 +489,20 @@ describe('RemoteData', () => {
 				expect(successRD.altL(() => successRD)).toBe(successRD);
 			});
 		});
+		describe('mapLeft', () => {
+			const f2 = () => 1;
+			it('initial', () => {
+				expect(initialRD.mapLeft(f2)).toBe(initialRD);
+			});
+			it('pending', () => {
+				expect(pendingRD.mapLeft(f2)).toBe(pendingRD);
+			});
+			it('failure', () => {
+				expect(failureRD.mapLeft(f2)).toEqual(failure(1));
+			});
+			it('success', () => {
+				expect(successRD.mapLeft(f2)).toBe(successRD);
+			});
+		});
 	});
 });

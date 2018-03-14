@@ -16,6 +16,7 @@ import { Alternative2 } from 'fp-ts/lib/Alternative';
 import { Ord } from 'fp-ts/lib/Ord';
 import { sign } from 'fp-ts/lib/Ordering';
 import { Semigroup } from 'fp-ts/lib/Semigroup';
+import { Monoid } from 'fp-ts/lib/Monoid';
 
 export const URI = 'RemoteData';
 export type URI = typeof URI;
@@ -526,6 +527,14 @@ export const getSemigroup = <L, A>(SL: Semigroup<L>, SA: Semigroup<A>): Semigrou
 				xValue => y.fold(x, x, () => x, yValue => success(SA.concat(xValue, yValue))),
 			);
 		},
+	};
+};
+
+//Monoid
+export const getMonoid = <L, A>(ML: Monoid<L>, MA: Monoid<A>): Monoid<RemoteData<L, A>> => {
+	return {
+		...getSemigroup(ML, MA),
+		empty: initial,
 	};
 };
 

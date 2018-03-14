@@ -9,6 +9,7 @@ import {
 	getSetoid,
 	getOrd,
 	getSemigroup,
+	getMonoid,
 } from '../remote-data';
 import { identity, compose } from 'fp-ts/lib/function';
 import { sequence, traverse } from 'fp-ts/lib/Traversable';
@@ -17,6 +18,7 @@ import { array } from 'fp-ts/lib/Array';
 import { setoidNumber, setoidString } from 'fp-ts/lib/Setoid';
 import { ordNumber, ordString } from 'fp-ts/lib/Ord';
 import { semigroupString, semigroupSum } from 'fp-ts/lib/Semigroup';
+import { monoidString, monoidSum } from 'fp-ts/lib/Monoid';
 
 describe('RemoteData', () => {
 	const double = (x: number) => x * 2;
@@ -335,6 +337,12 @@ describe('RemoteData', () => {
 				expect(concat(successRD, failureRD)).toBe(successRD);
 				expect(concat(success(1), success(1))).toEqual(success(semigroupSum.concat(1, 1)));
 			});
+		});
+	});
+	describe('Monoid', () => {
+		it('getMonoid', () => {
+			const empty = getMonoid(monoidString, monoidSum).empty;
+			expect(empty).toBe(initial);
 		});
 	});
 	describe('helpers', () => {

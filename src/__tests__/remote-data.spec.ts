@@ -541,6 +541,9 @@ describe('RemoteData', () => {
 			});
 			it('failure', () => {
 				expect(failureRD.isFailure()).toEqual(true);
+				if (failureRD.isFailure()) {
+					expect(failureRD.error).toBeDefined();
+				}
 			});
 			it('success', () => {
 				expect(successRD.isFailure()).toBe(false);
@@ -558,6 +561,9 @@ describe('RemoteData', () => {
 			});
 			it('success', () => {
 				expect(successRD.isSuccess()).toBe(true);
+				if (successRD.isSuccess()) {
+					expect(successRD.value).toBeDefined();
+				}
 			});
 		});
 	});

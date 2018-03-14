@@ -1,9 +1,10 @@
-import { pending, failure, success, RemoteData, initial, combine, remoteData, getSetoid } from '../remote-data';
+import { pending, failure, success, RemoteData, initial, combine, remoteData, getSetoid, getOrd } from '../remote-data';
 import { identity, compose } from 'fp-ts/lib/function';
 import { sequence, traverse } from 'fp-ts/lib/Traversable';
 import { none, option, some } from 'fp-ts/lib/Option';
 import { array } from 'fp-ts/lib/Array';
 import { setoidNumber, setoidString } from 'fp-ts/lib/Setoid';
+import { ordNumber, ordString } from 'fp-ts/lib/Ord';
 
 describe('RemoteData', () => {
 	const double = (x: number) => x * 2;
@@ -259,6 +260,39 @@ describe('RemoteData', () => {
 				expect(equals(successRD, failureRD)).toBe(false);
 				expect(equals(successRD, successRD)).toBe(true);
 				expect(equals(success(1), success(2))).toBe(false);
+			});
+		});
+	});
+	describe('Ord', () => {
+		describe('getOrd', () => {
+			const compare = getOrd(ordString, ordNumber).compare;
+			it('initial', () => {
+				expect(compare(initialRD, initialRD)).toBe(0);
+				expect(compare(initialRD, pendingRD)).toBe(-1);
+				expect(compare(initialRD, failureRD)).toBe(-1);
+				expect(compare(initialRD, successRD)).toBe(-1);
+			});
+			it('pending', () => {
+				expect(compare(pendingRD, initialRD)).toBe(1);
+				expect(compare(pendingRD, pendingRD)).toBe(0);
+				expect(compare(pendingRD, failureRD)).toBe(-1);
+				expect(compare(pendingRD, successRD)).toBe(-1);
+			});
+			it('failure', () => {
+				expect(compare(failureRD, initialRD)).toBe(1);
+				expect(compare(failureRD, pendingRD)).toBe(1);
+				expect(compare(failureRD, failureRD)).toBe(0);
+				expect(compare(failureRD, successRD)).toBe(-1);
+				expect(compare(failure('1'), failure('2'))).toBe(-1);
+				expect(compare(failure('2'), failure('1'))).toBe(1);
+			});
+			it('success', () => {
+				expect(compare(successRD, initialRD)).toBe(1);
+				expect(compare(successRD, pendingRD)).toBe(1);
+				expect(compare(successRD, failureRD)).toBe(1);
+				expect(compare(successRD, successRD)).toBe(0);
+				expect(compare(success(1), success(2))).toBe(-1);
+				expect(compare(success(2), success(1))).toBe(1);
 			});
 		});
 	});

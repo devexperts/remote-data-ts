@@ -354,5 +354,33 @@ describe('RemoteData', () => {
 				expect(success(1).getOrElseL(() => 0)).toBe(1);
 			});
 		});
+		describe('fold', () => {
+			it('initial', () => {
+				expect(initialRD.fold(1, 2, () => 3, () => 4)).toBe(1);
+			});
+			it('pending', () => {
+				expect(pendingRD.fold(1, 2, () => 3, () => 4)).toBe(2);
+			});
+			it('failure', () => {
+				expect(failureRD.fold(1, 2, () => 3, () => 4)).toBe(3);
+			});
+			it('success', () => {
+				expect(successRD.fold(1, 2, () => 3, () => 4)).toBe(4);
+			});
+		});
+		describe('foldL', () => {
+			it('initial', () => {
+				expect(initialRD.foldL(() => 1, () => 2, () => 3, () => 4)).toBe(1);
+			});
+			it('pending', () => {
+				expect(pendingRD.foldL(() => 1, () => 2, () => 3, () => 4)).toBe(2);
+			});
+			it('failure', () => {
+				expect(failureRD.foldL(() => 1, () => 2, () => 3, () => 4)).toBe(3);
+			});
+			it('success', () => {
+				expect(successRD.foldL(() => 1, () => 2, () => 3, () => 4)).toBe(4);
+			});
+		});
 	});
 });

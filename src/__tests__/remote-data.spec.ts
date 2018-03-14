@@ -11,6 +11,7 @@ import {
 	getSemigroup,
 	getMonoid,
 	fromOption,
+	fromEither,
 } from '../remote-data';
 import { identity, compose } from 'fp-ts/lib/function';
 import { sequence, traverse } from 'fp-ts/lib/Traversable';
@@ -20,6 +21,7 @@ import { setoidNumber, setoidString } from 'fp-ts/lib/Setoid';
 import { ordNumber, ordString } from 'fp-ts/lib/Ord';
 import { semigroupString, semigroupSum } from 'fp-ts/lib/Semigroup';
 import { monoidString, monoidSum } from 'fp-ts/lib/Monoid';
+import { left, right } from 'fp-ts/lib/Either';
 
 describe('RemoteData', () => {
 	const double = (x: number) => x * 2;
@@ -383,6 +385,14 @@ describe('RemoteData', () => {
 			});
 			it('some', () => {
 				expect(fromOption(some(123), () => error)).toEqual(success(123));
+			});
+		});
+		describe('fromEither', () => {
+			it('left', () => {
+				expect(fromEither(left('123'))).toEqual(failure('123'));
+			});
+			it('right', () => {
+				expect(fromEither(right('123'))).toEqual(success('123'));
 			});
 		});
 	});

@@ -12,6 +12,7 @@ import { array } from 'fp-ts/lib/Array';
 
 import { HKT, HKT2, Type, Type2, URIS, URIS2 } from 'fp-ts/lib/HKT';
 import { Applicative } from 'fp-ts/lib/Applicative';
+import { Alternative2 } from 'fp-ts/lib/Alternative';
 
 export const URI = 'RemoteData';
 export type URI = typeof URI;
@@ -463,6 +464,9 @@ function traverse<F>(
 //Alt
 const alt = <L, A>(fx: RemoteData<L, A>, fy: RemoteData<L, A>): RemoteData<L, A> => fx.alt(fy);
 
+//Alternative
+const zero = <L, A>(): RemoteData<L, A> => initial;
+
 //Extend
 const extend = <L, A, B>(fla: RemoteData<L, A>, f: Function1<RemoteData<L, A>, B>): RemoteData<L, B> => fla.extend(f);
 
@@ -516,7 +520,12 @@ export function fromPredicate<L, A>(
 }
 
 //instance
-export const remoteData: Monad2<URI> & Foldable2<URI> & Traversable2<URI> & Alt2<URI> & Extend2<URI> = {
+export const remoteData: Monad2<URI> &
+	Foldable2<URI> &
+	Traversable2<URI> &
+	Alt2<URI> &
+	Extend2<URI> &
+	Alternative2<URI> = {
 	//HKT
 	URI,
 
@@ -534,6 +543,9 @@ export const remoteData: Monad2<URI> & Foldable2<URI> & Traversable2<URI> & Alt2
 
 	//Alt
 	alt,
+
+	//Alternative
+	zero,
 
 	//Extend
 	extend,

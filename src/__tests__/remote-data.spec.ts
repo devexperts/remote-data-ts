@@ -225,6 +225,11 @@ describe('RemoteData', () => {
 			});
 		});
 	});
+	describe('Alternative', () => {
+		it('zero', () => {
+			expect(remoteData.zero()).toBe(initial);
+		});
+	});
 	describe('helpers', () => {
 		describe('combine', () => {
 			it('should combine all initials to initial', () => {

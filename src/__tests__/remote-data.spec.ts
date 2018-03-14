@@ -124,7 +124,7 @@ describe('RemoteData', () => {
 			});
 		});
 	});
-	describe('Monad', () => {
+	describe('Chain', () => {
 		describe('chain', () => {
 			it('initial', () => {
 				expect(initialRD.chain(() => initialRD)).toBe(initialRD);

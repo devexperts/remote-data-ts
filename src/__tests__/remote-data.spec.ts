@@ -382,5 +382,31 @@ describe('RemoteData', () => {
 				expect(successRD.foldL(() => 1, () => 2, () => 3, () => 4)).toBe(4);
 			});
 		});
+		describe('altL', () => {
+			it('initial', () => {
+				expect(initialRD.altL(() => initialRD)).toBe(initialRD);
+				expect(initialRD.altL(() => pendingRD)).toBe(pendingRD);
+				expect(initialRD.altL(() => failureRD)).toBe(failureRD);
+				expect(initialRD.altL(() => successRD)).toBe(successRD);
+			});
+			it('pending', () => {
+				expect(pendingRD.altL(() => initialRD)).toBe(initialRD);
+				expect(pendingRD.altL(() => pendingRD)).toBe(pendingRD);
+				expect(pendingRD.altL(() => failureRD)).toBe(failureRD);
+				expect(pendingRD.altL(() => successRD)).toBe(successRD);
+			});
+			it('failure', () => {
+				expect(failureRD.altL(() => pendingRD)).toBe(pendingRD);
+				expect(failureRD.altL(() => initialRD)).toBe(initialRD);
+				expect(failureRD.altL(() => failureRD)).toBe(failureRD);
+				expect(failureRD.altL(() => successRD)).toBe(successRD);
+			});
+			it('failure', () => {
+				expect(successRD.altL(() => pendingRD)).toBe(successRD);
+				expect(successRD.altL(() => initialRD)).toBe(successRD);
+				expect(successRD.altL(() => failureRD)).toBe(successRD);
+				expect(successRD.altL(() => successRD)).toBe(successRD);
+			});
+		});
 	});
 });

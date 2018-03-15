@@ -594,5 +594,19 @@ describe('RemoteData', () => {
 				expect(success(1).toNullable()).toEqual(1);
 			});
 		});
+		describe('toString', () => {
+			it('initial', () => {
+				expect(initialRD.toString()).toBe('initial');
+			});
+			it('pending', () => {
+				expect(pendingRD.toString()).toBe('pending');
+			});
+			it('failure', () => {
+				expect(failure('foo').toString()).toBe('failure("foo")');
+			});
+			it('success', () => {
+				expect(success(1).toString()).toBe('success(1)');
+			});
+		});
 	});
 });

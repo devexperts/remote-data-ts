@@ -608,5 +608,20 @@ describe('RemoteData', () => {
 				expect(success(1).toString()).toBe('success(1)');
 			});
 		});
+		describe('contains', () => {
+			it('initial', () => {
+				expect(initialRD.contains(setoidNumber, 1)).toBe(false);
+			});
+			it('pending', () => {
+				expect(pendingRD.contains(setoidNumber, 1)).toBe(false);
+			});
+			it('failure', () => {
+				expect(failureRD.contains(setoidNumber, 1)).toBe(false);
+			});
+			it('success', () => {
+				expect(success(2).contains(setoidNumber, 1)).toBe(false);
+				expect(success(1).contains(setoidNumber, 1)).toBe(true);
+			});
+		});
 	});
 });

@@ -623,5 +623,21 @@ describe('RemoteData', () => {
 				expect(success(1).contains(setoidNumber, 1)).toBe(true);
 			});
 		});
+		describe('exists', () => {
+			const p = (n: number) => n === 1;
+			it('initial', () => {
+				expect(initialRD.exists(p)).toBe(false);
+			});
+			it('pending', () => {
+				expect(pendingRD.exists(p)).toBe(false);
+			});
+			it('failure', () => {
+				expect(failureRD.exists(p)).toBe(false);
+			});
+			it('success', () => {
+				expect(success(2).exists(p)).toBe(false);
+				expect(success(1).exists(p)).toBe(true);
+			});
+		});
 	});
 });

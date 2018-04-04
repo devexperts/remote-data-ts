@@ -17,6 +17,7 @@ import { Ord } from 'fp-ts/lib/Ord';
 import { sign } from 'fp-ts/lib/Ordering';
 import { Semigroup } from 'fp-ts/lib/Semigroup';
 import { Monoid } from 'fp-ts/lib/Monoid';
+import { Monoidal2 } from 'fp-ts/lib/Monoidal';
 
 export const URI = 'RemoteData';
 export type URI = typeof URI;
@@ -470,6 +471,10 @@ export const isSuccess = <L, A>(data: RemoteData<L, A>): data is RemoteSuccess<L
 export const isPending = <L, A>(data: RemoteData<L, A>): data is RemotePending<L, A> => data.isPending();
 export const isInitial = <L, A>(data: RemoteData<L, A>): data is RemoteInitial<L, A> => data.isInitial();
 
+//Monoidal
+const unit = <L, A>(): RemoteData<L, A> => initial;
+const mult = <L, A, B>(fa: RemoteData<L, A>, fb: RemoteData<L, B>): RemoteData<L, [A, B]> => combine(fa, fb);
+
 //Setoid
 export const getSetoid = <L, A>(SL: Setoid<L>, SA: Setoid<A>): Setoid<RemoteData<L, A>> => {
 	return {
@@ -551,7 +556,8 @@ export const remoteData: Monad2<URI> &
 	Traversable2<URI> &
 	Alt2<URI> &
 	Extend2<URI> &
-	Alternative2<URI> = {
+	Alternative2<URI> &
+	Monoidal2<URI> = {
 	//HKT
 	URI,
 
@@ -575,6 +581,10 @@ export const remoteData: Monad2<URI> &
 
 	//Extend
 	extend,
+
+	//Monoidal
+	unit,
+	mult,
 };
 
 export function combine<A, L>(a: RemoteData<L, A>): RemoteData<L, [A]>;

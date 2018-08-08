@@ -11,7 +11,7 @@ As you remember RemoteData is an union of few types: `RemoteInitial`, `RemotePen
 While your data in **initial** or **pending** state just use `initial` or `pending` constant, because you don't have any **real** values in this case.
 
 ```
-import { initial, pending } from 'remote-data-ts';
+import { initial, pending } from '@devexperts/remote-data-ts';
  
 const customers = initial;
 // or
@@ -20,7 +20,7 @@ const customers = pending;
   
 When you receive data from server, use `failure` or `success` function, it depends on what you received:
 ```
-import { failure, success } from 'remote-data-ts';
+import { failure, success } from '@devexperts/remote-data-ts';
 import { apiClient } from 'apiClient'; 
 import { TCustomer } from './MyModel';
  
@@ -48,7 +48,7 @@ type TCustomersList = {
     entities: RemoteData<TCustomer[]>;
 };
  
-const CustomersList: SFC<TCustomersList> = ({ entities }) => entities.fold(
+const CustomersList: SFC<TCustomersList> = ({ entities }) => entities.foldL(
     () => <NoData />,
     () => <Pending />,
     err => <Failure error={err} />,

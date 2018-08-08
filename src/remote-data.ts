@@ -27,6 +27,8 @@ declare module 'fp-ts/lib/HKT' {
 	}
 }
 
+export type RemoteStatus = 'initial' | 'failure' | 'success' | 'pending';
+
 export class RemoteInitial<L, A> {
 	readonly _tag: 'RemoteInitial' = 'RemoteInitial';
 	// prettier-ignore
@@ -35,6 +37,7 @@ export class RemoteInitial<L, A> {
 	readonly '_A': A;
 	// prettier-ignore
 	readonly '_L': L;
+	readonly status: RemoteStatus = 'initial';
 
 	/**
 	 * `alt` short for alternative, takes another `RemoteData`.
@@ -319,6 +322,7 @@ export class RemoteFailure<L, A> {
 	readonly '_A': A;
 	// prettier-ignore
 	readonly '_L': L;
+	readonly status: RemoteStatus = 'failure';
 
 	constructor(readonly error: L) {}
 
@@ -605,6 +609,7 @@ export class RemoteSuccess<L, A> {
 	readonly '_A': A;
 	// prettier-ignore
 	readonly '_L': L;
+	readonly status: RemoteStatus = 'success';
 
 	constructor(readonly value: A) {}
 
@@ -891,6 +896,7 @@ export class RemotePending<L, A> {
 	readonly '_A': A;
 	// prettier-ignore
 	readonly '_L': L;
+	readonly status: RemoteStatus = 'pending';
 
 	/**
 	 * `alt` short for alternative, takes another `RemoteData`.

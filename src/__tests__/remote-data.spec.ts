@@ -13,6 +13,8 @@ import {
 	fromOption,
 	fromEither,
 	fromPredicate,
+	progress,
+	fromProgressEvent,
 } from '../remote-data';
 import { identity, compose } from 'fp-ts/lib/function';
 import { sequence, traverse } from 'fp-ts/lib/Traversable';
@@ -378,6 +380,41 @@ describe('RemoteData', () => {
 				expect(combine.apply(null, values)).toEqual(failure('bar'));
 				expect(combine.apply(null, values.reverse())).toEqual(failure('bar'));
 			});
+			describe('progress', () => {
+				it('should combine pendings without progress', () => {
+					const values = [pending, pending];
+					expect(combine.apply(null, values)).toBe(pending);
+					expect(combine.apply(null, values.reverse())).toBe(pending);
+				});
+				it('should combine pending and progress', () => {
+					const withProgress = progress({ loaded: 1, total: none });
+					const values = [pending, withProgress];
+					expect(combine.apply(null, values)).toBe(withProgress);
+					expect(combine.apply(null, values.reverse())).toBe(withProgress);
+				});
+				it('should combine progress without total', () => {
+					const withProgress = progress({ loaded: 1, total: none });
+					const values = [withProgress, withProgress];
+					expect(combine.apply(null, values)).toEqual(progress({ loaded: 2, total: none }));
+					expect(combine.apply(null, values.reverse())).toEqual(progress({ loaded: 2, total: none }));
+				});
+				it('should combine progress without total and progress with total', () => {
+					const withProgress = progress({ loaded: 1, total: none });
+					const withProgressAndTotal = progress({ loaded: 1, total: some(2) });
+					const values = [withProgress, withProgressAndTotal];
+					expect(combine.apply(null, values)).toEqual(progress({ loaded: 2, total: none }));
+					expect(combine.apply(null, values.reverse())).toEqual(progress({ loaded: 2, total: none }));
+				});
+				it('should combine progresses with total', () => {
+					const values = [progress({ loaded: 2, total: some(10) }), progress({ loaded: 2, total: some(30) })];
+					const expected = progress({
+						loaded: (2 * 10 + 2 * 30) / (40 * 40),
+						total: some(10 + 30),
+					});
+					expect(combine.apply(null, values)).toEqual(expected);
+					expect(combine.apply(null, values.reverse())).toEqual(expected);
+				});
+			});
 		});
 		describe('fromOption', () => {
 			const error = new Error('foo');
@@ -403,6 +440,17 @@ describe('RemoteData', () => {
 			});
 			it('true', () => {
 				expect(factory(true)).toEqual(success(true));
+			});
+		});
+		describe('fromProgressEvent', () => {
+			const e = new ProgressEvent('test');
+			it('lengthComputable === false', () => {
+				expect(fromProgressEvent({ ...e, loaded: 123 })).toEqual(progress({ loaded: 123, total: none }));
+			});
+			it('lengthComputable === true', () => {
+				expect(fromProgressEvent({ ...e, loaded: 123, lengthComputable: true, total: 1000 })).toEqual(
+					progress({ loaded: 123, total: some(1000) }),
+				);
 			});
 		});
 	});

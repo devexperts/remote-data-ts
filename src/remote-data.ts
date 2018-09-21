@@ -27,6 +27,44 @@ declare module 'fp-ts/lib/HKT' {
 	}
 }
 
+export type RemoteProgress = {
+	loaded: number;
+	total: Option<number>;
+};
+const concatPendings = <L, A>(a: RemotePending<L, A>, b: RemotePending<L, A>): RemotePending<L, A> => {
+	if (a.progress.isSome() && b.progress.isSome()) {
+		const progressA = a.progress.value;
+		const progressB = b.progress.value;
+		if (progressA.total.isNone() || progressB.total.isNone()) {
+			//tslint:disable no-use-before-declare
+			return progress({
+				loaded: progressA.loaded + progressB.loaded,
+				total: none,
+			});
+			//tslint:enable no-use-before-declare
+		}
+		const totalA = progressA.total.value;
+		const totalB = progressB.total.value;
+		const total = totalA + totalB;
+		const loaded = (progressA.loaded * totalA + progressB.loaded * totalB) / (total * total);
+		//tslint:disable no-use-before-declare
+		return progress({
+			loaded,
+			total: some(total),
+		});
+		//tslint:enable no-use-before-declare
+	}
+	const noA = a.progress.isNone();
+	const noB = b.progress.isNone();
+	if (noA && !noB) {
+		return b;
+	}
+	if (!noA && noB) {
+		return a;
+	}
+	return pending; //tslint:disable-line no-use-before-declare
+};
+
 export class RemoteInitial<L, A> {
 	readonly _tag: 'RemoteInitial' = 'RemoteInitial';
 	// prettier-ignore
@@ -364,7 +402,7 @@ export class RemoteFailure<L, A> {
 	 * `failure(new Error('err text')).ap(initial) will return initial.`
 	 */
 	ap<B>(fab: RemoteData<L, Function1<A, B>>): RemoteData<L, B> {
-		return fab.fold(initial, pending, () => fab as any, () => this); //tslint:disable-line no-use-before-declare
+		return fab.fold(initial, fab, () => fab as any, () => this); //tslint:disable-line no-use-before-declare
 	}
 
 	/**
@@ -650,7 +688,7 @@ export class RemoteSuccess<L, A> {
 	 * `failure(new Error('err text')).ap(initial) will return initial.`
 	 */
 	ap<B>(fab: RemoteData<L, Function1<A, B>>): RemoteData<L, B> {
-		return fab.fold(initial, pending, () => fab as any, value => this.map(value)); //tslint:disable-line no-use-before-declare
+		return fab.fold(initial, fab, () => fab as any, value => this.map(value)); //tslint:disable-line no-use-before-declare
 	}
 
 	/**
@@ -892,6 +930,8 @@ export class RemotePending<L, A> {
 	// prettier-ignore
 	readonly '_L': L;
 
+	constructor(readonly progress: Option<RemoteProgress> = none) {}
+
 	/**
 	 * `alt` short for alternative, takes another `RemoteData`.
 	 * If `this` `RemoteData` is a `RemoteSuccess` type then it will be returned.
@@ -934,7 +974,12 @@ export class RemotePending<L, A> {
 	 * `failure(new Error('err text')).ap(initial) will return initial.`
 	 */
 	ap<B>(fab: RemoteData<L, Function1<A, B>>): RemoteData<L, B> {
-		return fab.fold(initial, pending as any, () => pending, () => pending); //tslint:disable-line no-use-before-declare
+		return fab.fold(
+			initial, //tslint:disable-line no-use-before-declare
+			fab.isPending() ? (concatPendings(this, fab as any) as any) : this,
+			() => this,
+			() => this,
+		);
 	}
 
 	/**
@@ -1222,6 +1267,7 @@ const extend = <L, A, B>(fla: RemoteData<L, A>, f: Function1<RemoteData<L, A>, B
 export const failure = <L, A>(error: L): RemoteFailure<L, A> => new RemoteFailure(error);
 export const success: <L, A>(value: A) => RemoteSuccess<L, A> = of;
 export const pending: RemotePending<never, never> = new RemotePending<never, never>();
+export const progress = <L, A>(progress: RemoteProgress): RemotePending<L, A> => new RemotePending(some(progress));
 export const initial: RemoteInitial<never, never> = new RemoteInitial<never, never>();
 
 //Alternative
@@ -1272,7 +1318,7 @@ export const getSemigroup = <L, A>(SL: Semigroup<L>, SA: Semigroup<A>): Semigrou
 		concat: (x, y) => {
 			return x.foldL(
 				() => y.fold(y, y, () => y, () => y),
-				() => y.fold(x, y, () => y, () => y),
+				() => y.foldL(() => x, () => concatPendings(x as any, y as any), () => y, () => y),
 
 				xError => y.fold(x, x, yError => failure(SL.concat(xError, yError)), () => y),
 				xValue => y.fold(x, x, () => x, yValue => success(SA.concat(xValue, yValue))),
@@ -1310,6 +1356,13 @@ export function fromPredicate<L, A>(
 	whenFalse: Function1<A, L>,
 ): Function1<A, RemoteData<L, A>> {
 	return a => (predicate(a) ? success(a) : failure(whenFalse(a)));
+}
+
+export function fromProgressEvent<L, A>(event: ProgressEvent): RemotePending<L, A> {
+	return progress({
+		loaded: event.loaded,
+		total: event.lengthComputable ? some(event.total) : none,
+	});
 }
 
 //instance

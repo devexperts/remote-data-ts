@@ -13,8 +13,10 @@ import {
 	fromOption,
 	fromEither,
 	fromPredicate,
+	progress,
+	fromProgressEvent,
 } from '../remote-data';
-import { identity, compose } from 'fp-ts/lib/function';
+import { identity, compose, Function1 } from 'fp-ts/lib/function';
 import { sequence, traverse } from 'fp-ts/lib/Traversable';
 import { none, option, some } from 'fp-ts/lib/Option';
 import { array } from 'fp-ts/lib/Array';
@@ -30,6 +32,7 @@ describe('RemoteData', () => {
 	const pendingRD: RemoteData<string, number> = pending;
 	const successRD: RemoteData<string, number> = success(1);
 	const failureRD: RemoteData<string, number> = failure('foo');
+	const progressRD: RemoteData<string, Function1<number, number>> = progress({ loaded: 1, total: none });
 	describe('Functor', () => {
 		describe('should map over value', () => {
 			it('initial', () => {
@@ -124,24 +127,28 @@ describe('RemoteData', () => {
 			it('initial', () => {
 				expect(initialRD.ap(initial)).toBe(initialRD);
 				expect(initialRD.ap(pending)).toBe(initialRD);
+				expect(initialRD.ap(progressRD)).toBe(initialRD);
 				expect(initialRD.ap(failedF)).toBe(initialRD);
 				expect(initialRD.ap(f)).toBe(initialRD);
 			});
 			it('pending', () => {
 				expect(pendingRD.ap(initial)).toBe(initial);
 				expect(pendingRD.ap(pending)).toBe(pendingRD);
+				expect(pendingRD.ap(progressRD)).toBe(progressRD);
 				expect(pendingRD.ap(failedF)).toBe(pendingRD);
 				expect(pendingRD.ap(f)).toBe(pendingRD);
 			});
 			it('failure', () => {
 				expect(failureRD.ap(initial)).toBe(initial);
 				expect(failureRD.ap(pending)).toBe(pending);
+				expect(failureRD.ap(progressRD)).toBe(progressRD);
 				expect(failureRD.ap(failedF)).toBe(failedF);
 				expect(failureRD.ap(f)).toBe(failureRD);
 			});
 			it('success', () => {
 				expect(successRD.ap(initial)).toBe(initial);
 				expect(successRD.ap(pending)).toBe(pending);
+				expect(successRD.ap(progressRD)).toBe(progressRD);
 				expect(successRD.ap(failedF)).toBe(failedF);
 				expect(successRD.ap(f)).toEqual(success(double(1)));
 			});
@@ -341,6 +348,33 @@ describe('RemoteData', () => {
 				expect(concat(successRD, failureRD)).toBe(successRD);
 				expect(concat(success(1), success(1))).toEqual(success(semigroupSum.concat(1, 1)));
 			});
+			describe('progress', () => {
+				it('should concat pendings without progress', () => {
+					expect(concat(pending, pending)).toEqual(pending);
+				});
+				it('should concat pending and progress', () => {
+					const withProgress: RemoteData<string, number> = progress({ loaded: 1, total: none });
+					expect(concat(pending, withProgress)).toBe(withProgress);
+				});
+				it('should concat progress without total', () => {
+					const withProgress: RemoteData<string, number> = progress({ loaded: 1, total: none });
+					expect(concat(withProgress, withProgress)).toEqual(progress({ loaded: 2, total: none }));
+				});
+				it('should concat progress without total and progress with total', () => {
+					const withProgress: RemoteData<string, number> = progress({ loaded: 1, total: none });
+					const withProgressAndTotal: RemoteData<string, number> = progress({ loaded: 1, total: some(2) });
+					expect(concat(withProgress, withProgressAndTotal)).toEqual(progress({ loaded: 2, total: none }));
+				});
+				it('should combine progresses with total', () => {
+					const expected = progress({
+						loaded: (2 * 10 + 2 * 30) / (40 * 40),
+						total: some(10 + 30),
+					});
+					expect(
+						concat(progress({ loaded: 2, total: some(10) }), progress({ loaded: 2, total: some(30) })),
+					).toEqual(expected);
+				});
+			});
 		});
 	});
 	describe('Monoid', () => {
@@ -378,6 +412,41 @@ describe('RemoteData', () => {
 				expect(combine.apply(null, values)).toEqual(failure('bar'));
 				expect(combine.apply(null, values.reverse())).toEqual(failure('bar'));
 			});
+			describe('progress', () => {
+				it('should combine pendings without progress', () => {
+					const values = [pending, pending];
+					expect(combine.apply(null, values)).toBe(pending);
+					expect(combine.apply(null, values.reverse())).toBe(pending);
+				});
+				it('should combine pending and progress', () => {
+					const withProgress = progress({ loaded: 1, total: none });
+					const values = [pending, withProgress];
+					expect(combine.apply(null, values)).toBe(withProgress);
+					expect(combine.apply(null, values.reverse())).toBe(withProgress);
+				});
+				it('should combine progress without total', () => {
+					const withProgress = progress({ loaded: 1, total: none });
+					const values = [withProgress, withProgress];
+					expect(combine.apply(null, values)).toEqual(progress({ loaded: 2, total: none }));
+					expect(combine.apply(null, values.reverse())).toEqual(progress({ loaded: 2, total: none }));
+				});
+				it('should combine progress without total and progress with total', () => {
+					const withProgress = progress({ loaded: 1, total: none });
+					const withProgressAndTotal = progress({ loaded: 1, total: some(2) });
+					const values = [withProgress, withProgressAndTotal];
+					expect(combine.apply(null, values)).toEqual(progress({ loaded: 2, total: none }));
+					expect(combine.apply(null, values.reverse())).toEqual(progress({ loaded: 2, total: none }));
+				});
+				it('should combine progresses with total', () => {
+					const values = [progress({ loaded: 2, total: some(10) }), progress({ loaded: 2, total: some(30) })];
+					const expected = progress({
+						loaded: (2 * 10 + 2 * 30) / (40 * 40),
+						total: some(10 + 30),
+					});
+					expect(combine.apply(null, values)).toEqual(expected);
+					expect(combine.apply(null, values.reverse())).toEqual(expected);
+				});
+			});
 		});
 		describe('fromOption', () => {
 			const error = new Error('foo');
@@ -403,6 +472,17 @@ describe('RemoteData', () => {
 			});
 			it('true', () => {
 				expect(factory(true)).toEqual(success(true));
+			});
+		});
+		describe('fromProgressEvent', () => {
+			const e = new ProgressEvent('test');
+			it('lengthComputable === false', () => {
+				expect(fromProgressEvent({ ...e, loaded: 123 })).toEqual(progress({ loaded: 123, total: none }));
+			});
+			it('lengthComputable === true', () => {
+				expect(fromProgressEvent({ ...e, loaded: 123, lengthComputable: true, total: 1000 })).toEqual(
+					progress({ loaded: 123, total: some(1000) }),
+				);
 			});
 		});
 	});

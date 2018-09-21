@@ -398,7 +398,7 @@ export class RemoteFailure<L, A> {
 	 * `failure(new Error('err text')).ap(initial) will return initial.`
 	 */
 	ap<B>(fab: RemoteData<L, Function1<A, B>>): RemoteData<L, B> {
-		return fab.fold(initial, pending, () => fab as any, () => this); //tslint:disable-line no-use-before-declare
+		return fab.fold(initial, fab, () => fab as any, () => this); //tslint:disable-line no-use-before-declare
 	}
 
 	/**
@@ -684,7 +684,7 @@ export class RemoteSuccess<L, A> {
 	 * `failure(new Error('err text')).ap(initial) will return initial.`
 	 */
 	ap<B>(fab: RemoteData<L, Function1<A, B>>): RemoteData<L, B> {
-		return fab.fold(initial, pending, () => fab as any, value => this.map(value)); //tslint:disable-line no-use-before-declare
+		return fab.fold(initial, fab, () => fab as any, value => this.map(value)); //tslint:disable-line no-use-before-declare
 	}
 
 	/**

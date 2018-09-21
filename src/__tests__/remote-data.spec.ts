@@ -639,5 +639,20 @@ describe('RemoteData', () => {
 				expect(success(1).exists(p)).toBe(true);
 			});
 		});
+		describe('recover', () => {
+			const f = (error: string) => (error === 'foo' ? some(1) : none);
+			it('initial', () => {
+				expect(initialRD.recover(f)).toBe(initialRD);
+			});
+			it('pending', () => {
+				expect(pendingRD.recover(f)).toBe(pendingRD);
+			});
+			it('failure', () => {
+				expect(failure<string, number>('foo').recover(f)).toEqual(success(1));
+			});
+			it('success', () => {
+				expect(successRD.recover(f)).toBe(successRD);
+			});
+		});
 	});
 });

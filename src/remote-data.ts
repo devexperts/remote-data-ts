@@ -309,6 +309,13 @@ export class RemoteInitial<L, A> {
 	exists(p: Predicate<A>): boolean {
 		return false;
 	}
+
+	/**
+	 * Processes failure error into new RemoteData if function f return some value
+	 */
+	recover(f: (error: L) => Option<A>): RemoteData<L, A> {
+		return this;
+	}
 }
 
 export class RemoteFailure<L, A> {
@@ -594,6 +601,13 @@ export class RemoteFailure<L, A> {
 	 */
 	exists(p: Predicate<A>): boolean {
 		return false;
+	}
+
+	/**
+	 * Processes failure error into new RemoteData if function f return some value
+	 */
+	recover(f: (error: L) => Option<A>): RemoteData<L, A> {
+		return f(this.error).fold<RemoteData<L, A>>(this, success);
 	}
 }
 
@@ -881,6 +895,13 @@ export class RemoteSuccess<L, A> {
 	exists(p: Predicate<A>): boolean {
 		return p(this.value);
 	}
+
+	/**
+	 * Processes failure error into new RemoteData if function f return some value
+	 */
+	recover(f: (error: L) => Option<A>): RemoteData<L, A> {
+		return this;
+	}
 }
 
 export class RemotePending<L, A> {
@@ -1164,6 +1185,13 @@ export class RemotePending<L, A> {
 	 */
 	exists(p: Predicate<A>): boolean {
 		return false;
+	}
+
+	/**
+	 * Processes failure error into new RemoteData if function f return some value
+	 */
+	recover(f: (error: L) => Option<A>): RemoteData<L, A> {
+		return this;
 	}
 }
 

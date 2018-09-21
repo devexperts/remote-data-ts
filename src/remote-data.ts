@@ -38,19 +38,23 @@ const concatPendings = <L, A>(a: RemotePending<L, A>, b: RemotePending<L, A>): R
 		const progressA = a.progress.value;
 		const progressB = b.progress.value;
 		if (progressA.total.isNone() || progressB.total.isNone()) {
+			//tslint:disable no-use-before-declare
 			return progress({
 				loaded: progressA.loaded + progressB.loaded,
 				total: none,
 			});
+			//tslint:enable no-use-before-declare
 		}
 		const totalA = progressA.total.value;
 		const totalB = progressB.total.value;
 		const total = totalA + totalB;
 		const loaded = (progressA.loaded * totalA + progressB.loaded * totalB) / (total * total);
+		//tslint:disable no-use-before-declare
 		return progress({
 			loaded,
 			total: some(total),
 		});
+		//tslint:enable no-use-before-declare
 	}
 	if (noA && !noB) {
 		return b;
@@ -58,7 +62,7 @@ const concatPendings = <L, A>(a: RemotePending<L, A>, b: RemotePending<L, A>): R
 	if (!noA && noB) {
 		return a;
 	}
-	return pending;
+	return pending; //tslint:disable-line no-use-before-declare
 };
 
 export class RemoteInitial<L, A> {
@@ -971,11 +975,11 @@ export class RemotePending<L, A> {
 	 */
 	ap<B>(fab: RemoteData<L, Function1<A, B>>): RemoteData<L, B> {
 		return fab.fold(
-			initial,
+			initial, //tslint:disable-line no-use-before-declare
 			fab.isPending() ? (concatPendings(this, fab as any) as any) : this,
 			() => this,
 			() => this,
-		); //tslint:disable-line no-use-before-declare
+		);
 	}
 
 	/**

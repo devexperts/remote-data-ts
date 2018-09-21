@@ -16,7 +16,7 @@ import {
 	progress,
 	fromProgressEvent,
 } from '../remote-data';
-import { identity, compose } from 'fp-ts/lib/function';
+import { identity, compose, Function1 } from 'fp-ts/lib/function';
 import { sequence, traverse } from 'fp-ts/lib/Traversable';
 import { none, option, some } from 'fp-ts/lib/Option';
 import { array } from 'fp-ts/lib/Array';
@@ -32,6 +32,7 @@ describe('RemoteData', () => {
 	const pendingRD: RemoteData<string, number> = pending;
 	const successRD: RemoteData<string, number> = success(1);
 	const failureRD: RemoteData<string, number> = failure('foo');
+	const progressRD: RemoteData<string, Function1<number, number>> = progress({ loaded: 1, total: none });
 	describe('Functor', () => {
 		describe('should map over value', () => {
 			it('initial', () => {
@@ -126,24 +127,28 @@ describe('RemoteData', () => {
 			it('initial', () => {
 				expect(initialRD.ap(initial)).toBe(initialRD);
 				expect(initialRD.ap(pending)).toBe(initialRD);
+				expect(initialRD.ap(progressRD)).toBe(initialRD);
 				expect(initialRD.ap(failedF)).toBe(initialRD);
 				expect(initialRD.ap(f)).toBe(initialRD);
 			});
 			it('pending', () => {
 				expect(pendingRD.ap(initial)).toBe(initial);
 				expect(pendingRD.ap(pending)).toBe(pendingRD);
+				expect(pendingRD.ap(progressRD)).toBe(progressRD);
 				expect(pendingRD.ap(failedF)).toBe(pendingRD);
 				expect(pendingRD.ap(f)).toBe(pendingRD);
 			});
 			it('failure', () => {
 				expect(failureRD.ap(initial)).toBe(initial);
 				expect(failureRD.ap(pending)).toBe(pending);
+				expect(failureRD.ap(progressRD)).toBe(progressRD);
 				expect(failureRD.ap(failedF)).toBe(failedF);
 				expect(failureRD.ap(f)).toBe(failureRD);
 			});
 			it('success', () => {
 				expect(successRD.ap(initial)).toBe(initial);
 				expect(successRD.ap(pending)).toBe(pending);
+				expect(successRD.ap(progressRD)).toBe(progressRD);
 				expect(successRD.ap(failedF)).toBe(failedF);
 				expect(successRD.ap(f)).toEqual(success(double(1)));
 			});

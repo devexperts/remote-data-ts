@@ -1318,7 +1318,7 @@ export const getSemigroup = <L, A>(SL: Semigroup<L>, SA: Semigroup<A>): Semigrou
 		concat: (x, y) => {
 			return x.foldL(
 				() => y.fold(y, y, () => y, () => y),
-				() => y.fold(x, y, () => y, () => y),
+				() => y.foldL(() => x, () => concatPendings(x as any, y as any), () => y, () => y),
 
 				xError => y.fold(x, x, yError => failure(SL.concat(xError, yError)), () => y),
 				xValue => y.fold(x, x, () => x, yValue => success(SA.concat(xValue, yValue))),

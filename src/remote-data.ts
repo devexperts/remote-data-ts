@@ -32,8 +32,6 @@ export type RemoteProgress = {
 	total: Option<number>;
 };
 const concatPendings = <L, A>(a: RemotePending<L, A>, b: RemotePending<L, A>): RemotePending<L, A> => {
-	const noA = a.progress.isNone();
-	const noB = b.progress.isNone();
 	if (a.progress.isSome() && b.progress.isSome()) {
 		const progressA = a.progress.value;
 		const progressB = b.progress.value;
@@ -56,6 +54,8 @@ const concatPendings = <L, A>(a: RemotePending<L, A>, b: RemotePending<L, A>): R
 		});
 		//tslint:enable no-use-before-declare
 	}
+	const noA = a.progress.isNone();
+	const noB = b.progress.isNone();
 	if (noA && !noB) {
 		return b;
 	}

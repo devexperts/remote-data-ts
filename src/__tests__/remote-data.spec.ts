@@ -348,6 +348,33 @@ describe('RemoteData', () => {
 				expect(concat(successRD, failureRD)).toBe(successRD);
 				expect(concat(success(1), success(1))).toEqual(success(semigroupSum.concat(1, 1)));
 			});
+			describe('progress', () => {
+				it('should concat pendings without progress', () => {
+					expect(concat(pending, pending)).toEqual(pending);
+				});
+				it('should concat pending and progress', () => {
+					const withProgress: RemoteData<string, number> = progress({ loaded: 1, total: none });
+					expect(concat(pending, withProgress)).toBe(withProgress);
+				});
+				it('should concat progress without total', () => {
+					const withProgress: RemoteData<string, number> = progress({ loaded: 1, total: none });
+					expect(concat(withProgress, withProgress)).toEqual(progress({ loaded: 2, total: none }));
+				});
+				it('should concat progress without total and progress with total', () => {
+					const withProgress: RemoteData<string, number> = progress({ loaded: 1, total: none });
+					const withProgressAndTotal: RemoteData<string, number> = progress({ loaded: 1, total: some(2) });
+					expect(concat(withProgress, withProgressAndTotal)).toEqual(progress({ loaded: 2, total: none }));
+				});
+				it('should combine progresses with total', () => {
+					const expected = progress({
+						loaded: (2 * 10 + 2 * 30) / (40 * 40),
+						total: some(10 + 30),
+					});
+					expect(
+						concat(progress({ loaded: 2, total: some(10) }), progress({ loaded: 2, total: some(30) })),
+					).toEqual(expected);
+				});
+			});
 		});
 	});
 	describe('Monoid', () => {

@@ -607,7 +607,7 @@ export class RemoteFailure<L, A> {
 	 * Processes failure error into new RemoteData if function f return some value
 	 */
 	recover(f: (error: L) => Option<A>): RemoteData<L, A> {
-		return f(this.error).fold<RemoteData<L, A>>(this, success);
+		return f(this.error).fold<RemoteData<L, A>>(this, success); //tslint:disable-line no-use-before-declare
 	}
 }
 

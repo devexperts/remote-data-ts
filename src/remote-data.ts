@@ -5,7 +5,7 @@ import { Alt2 } from 'fp-ts/lib/Alt';
 import { Extend2 } from 'fp-ts/lib/Extend';
 import { sequence, Traversable2 } from 'fp-ts/lib/Traversable';
 import { isNone, none, Option, some } from 'fp-ts/lib/Option';
-import { Either, isLeft } from 'fp-ts/lib/Either';
+import { Either, left, right, isLeft } from 'fp-ts/lib/Either';
 import { Setoid } from 'fp-ts/lib/Setoid';
 
 import { array } from 'fp-ts/lib/Array';
@@ -302,6 +302,48 @@ export class RemoteInitial<L, A> {
 	}
 
 	/**
+	 * Convert `RemoteData` to `Either`.
+	 * "Left" part will be converted to `Left<L>`.
+	 * Since `RemoteInitial` and `RemotePending` do not have `L` values,
+	 * you must provide a value of type `L` that will be used to construct
+	 * the `Left<L>` for those two cases.
+	 * `RemoteSuccess` will be converted to `Right<R>`.
+	 *
+	 * For example:
+	 *
+	 * `const iError = new Error('Data not fetched')`
+	 * `const pError = new Error('Data is fetching')`
+	 *
+	 * `success(2).toEither(iError, pError) will return right(2)`
+	 *
+	 * `initial.toEither(iError, pError) will return right(Error('Data not fetched'))`
+	 *
+	 * `pending.toEither(iError, pError) will return right(Error('Data is fetching'))`
+	 *
+	 * `failure(new Error('error text')).toEither(iError, pError) will return right(Error('error text'))`
+	 */
+	toEither(initial: L, pending: L): Either<L, A> {
+		return left(initial);
+	}
+
+	/**
+	 * Like `toEither`, but lazy: it takes functions that return an `L` value
+	 * as arguments instead of an `L` value.
+	 *
+	 * For example:
+	 *
+	 * `const iError = () => new Error('Data not fetched')`
+	 * `const pError = () => new Error('Data is fetching')`
+	 *
+	 * `initial.toEither(iError, pError) will return right(Error('Data not fetched'))`
+	 *
+	 * `pending.toEither(iError, pError) will return right(Error('Data is fetching'))`
+	 */
+	toEitherL(initial: Lazy<L>, pending: Lazy<L>): Either<L, A> {
+		return left(initial());
+	}
+
+	/**
 	 * One more way to fold (unwrap) value from `RemoteData`.
 	 * "Left" part will return `null`.
 	 * `RemoteSuccess` will return value.
@@ -595,6 +637,48 @@ export class RemoteFailure<L, A> {
 	}
 
 	/**
+	 * Convert `RemoteData` to `Either`.
+	 * "Left" part will be converted to `Left<L>`.
+	 * Since `RemoteInitial` and `RemotePending` do not have `L` values,
+	 * you must provide a value of type `L` that will be used to construct
+	 * the `Left<L>` for those two cases.
+	 * `RemoteSuccess` will be converted to `Right<R>`.
+	 *
+	 * For example:
+	 *
+	 * `const iError = new Error('Data not fetched')`
+	 * `const pError = new Error('Data is fetching')`
+	 *
+	 * `success(2).toEither(iError, pError) will return right(2)`
+	 *
+	 * `initial.toEither(iError, pError) will return right(Error('Data not fetched'))`
+	 *
+	 * `pending.toEither(iError, pError) will return right(Error('Data is fetching'))`
+	 *
+	 * `failure(new Error('error text')).toEither(iError, pError) will return right(Error('error text'))`
+	 */
+	toEither(initial: L, pending: L): Either<L, A> {
+		return left(this.error);
+	}
+
+	/**
+	 * Like `toEither`, but lazy: it takes functions that return an `L` value
+	 * as arguments instead of an `L` value.
+	 *
+	 * For example:
+	 *
+	 * `const iError = () => new Error('Data not fetched')`
+	 * `const pError = () => new Error('Data is fetching')`
+	 *
+	 * `initial.toEither(iError, pError) will return right(Error('Data not fetched'))`
+	 *
+	 * `pending.toEither(iError, pError) will return right(Error('Data is fetching'))`
+	 */
+	toEitherL(initial: Lazy<L>, pending: Lazy<L>): Either<L, A> {
+		return left(this.error);
+	}
+
+	/**
 	 * One more way to fold (unwrap) value from `RemoteData`.
 	 * "Left" part will return `null`.
 	 * `RemoteSuccess` will return value.
@@ -885,6 +969,48 @@ export class RemoteSuccess<L, A> {
 	 */
 	toOption(): Option<A> {
 		return some(this.value);
+	}
+
+	/**
+	 * Convert `RemoteData` to `Either`.
+	 * "Left" part will be converted to `Left<L>`.
+	 * Since `RemoteInitial` and `RemotePending` do not have `L` values,
+	 * you must provide a value of type `L` that will be used to construct
+	 * the `Left<L>` for those two cases.
+	 * `RemoteSuccess` will be converted to `Right<R>`.
+	 *
+	 * For example:
+	 *
+	 * `const iError = new Error('Data not fetched')`
+	 * `const pError = new Error('Data is fetching')`
+	 *
+	 * `success(2).toEither(iError, pError) will return right(2)`
+	 *
+	 * `initial.toEither(iError, pError) will return right(Error('Data not fetched'))`
+	 *
+	 * `pending.toEither(iError, pError) will return right(Error('Data is fetching'))`
+	 *
+	 * `failure(new Error('error text')).toEither(iError, pError) will return right(Error('error text'))`
+	 */
+	toEither(initial: L, pending: L): Either<L, A> {
+		return right(this.value);
+	}
+
+	/**
+	 * Like `toEither`, but lazy: it takes functions that return an `L` value
+	 * as arguments instead of an `L` value.
+	 *
+	 * For example:
+	 *
+	 * `const iError = () => new Error('Data not fetched')`
+	 * `const pError = () => new Error('Data is fetching')`
+	 *
+	 * `initial.toEither(iError, pError) will return right(Error('Data not fetched'))`
+	 *
+	 * `pending.toEither(iError, pError) will return right(Error('Data is fetching'))`
+	 */
+	toEitherL(initial: Lazy<L>, pending: Lazy<L>): Either<L, A> {
+		return right(this.value);
 	}
 
 	/**
@@ -1183,6 +1309,48 @@ export class RemotePending<L, A> {
 	 */
 	toOption(): Option<A> {
 		return none;
+	}
+
+	/**
+	 * Convert `RemoteData` to `Either`.
+	 * "Left" part will be converted to `Left<L>`.
+	 * Since `RemoteInitial` and `RemotePending` do not have `L` values,
+	 * you must provide a value of type `L` that will be used to construct
+	 * the `Left<L>` for those two cases.
+	 * `RemoteSuccess` will be converted to `Right<R>`.
+	 *
+	 * For example:
+	 *
+	 * `const iError = new Error('Data not fetched')`
+	 * `const pError = new Error('Data is fetching')`
+	 *
+	 * `success(2).toEither(iError, pError) will return right(2)`
+	 *
+	 * `initial.toEither(iError, pError) will return right(Error('Data not fetched'))`
+	 *
+	 * `pending.toEither(iError, pError) will return right(Error('Data is fetching'))`
+	 *
+	 * `failure(new Error('error text')).toEither(iError, pError) will return right(Error('error text'))`
+	 */
+	toEither(initial: L, pending: L): Either<L, A> {
+		return left(pending);
+	}
+
+	/**
+	 * Like `toEither`, but lazy: it takes functions that return an `L` value
+	 * as arguments instead of an `L` value.
+	 *
+	 * For example:
+	 *
+	 * `const iError = () => new Error('Data not fetched')`
+	 * `const pError = () => new Error('Data is fetching')`
+	 *
+	 * `initial.toEither(iError, pError) will return right(Error('Data not fetched'))`
+	 *
+	 * `pending.toEither(iError, pError) will return right(Error('Data is fetching'))`
+	 */
+	toEitherL(initial: Lazy<L>, pending: Lazy<L>): Either<L, A> {
+		return left(pending());
 	}
 
 	/**

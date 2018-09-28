@@ -660,6 +660,37 @@ describe('RemoteData', () => {
 				expect(success(1).toOption()).toEqual(some(1));
 			});
 		});
+		describe('toEither', () => {
+			it('initial', () => {
+				expect(initialRD.toEither('initial', 'pending')).toEqual(left('initial'));
+			});
+			it('pending', () => {
+				expect(pendingRD.toEither('initial', 'pending')).toEqual(left('pending'));
+			});
+			it('failure', () => {
+				expect(failureRD.toEither('initial', 'pending')).toEqual(left('foo'));
+			});
+			it('success', () => {
+				expect(success(1).toEither('initial', 'pending')).toEqual(right(1));
+			});
+		});
+		describe('toEitherL', () => {
+			const initialL = () => 'initial';
+			const pendingL = () => 'pending';
+
+			it('initial', () => {
+				expect(initialRD.toEitherL(initialL, pendingL)).toEqual(left('initial'));
+			});
+			it('pending', () => {
+				expect(pendingRD.toEitherL(initialL, pendingL)).toEqual(left('pending'));
+			});
+			it('failure', () => {
+				expect(failureRD.toEitherL(initialL, pendingL)).toEqual(left('foo'));
+			});
+			it('success', () => {
+				expect(success(1).toEitherL(initialL, pendingL)).toEqual(right(1));
+			});
+		});
 		describe('toNullable', () => {
 			it('initial', () => {
 				expect(initialRD.toNullable()).toBe(null);

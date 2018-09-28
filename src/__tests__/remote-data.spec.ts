@@ -681,7 +681,7 @@ describe('RemoteData', () => {
 			it('initial', () => {
 				expect(initialRD.toEitherL(initialL, pendingL)).toEqual(left('initial'));
 			});
-			it(pendingL, () => {
+			it('pending', () => {
 				expect(pendingRD.toEitherL(initialL, pendingL)).toEqual(left('pending'));
 			});
 			it('failure', () => {

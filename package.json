@@ -1,6 +1,6 @@
 {
   "name": "@devexperts/remote-data-ts",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "main": "dist/remote-data.js",
   "typings": "dist/remote-data.d.ts",
   "scripts": {

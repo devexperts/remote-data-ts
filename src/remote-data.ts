@@ -31,7 +31,7 @@ export type RemoteProgress = {
 	loaded: number;
 	total: Option<number>;
 };
-const concatPendings = <L, A>(a: RemotePending<L, A>, b: RemotePending<L, A>): RemotePending<L, A> => {
+const concatPendings = <L, A>(a: RemotePending<L, A>, b: RemotePending<L, A>): RemoteData<L, A> => {
 	if (a.progress.isSome() && b.progress.isSome()) {
 		const progressA = a.progress.value;
 		const progressB = b.progress.value;
@@ -1460,11 +1460,11 @@ const alt = <L, A>(fx: RemoteData<L, A>, fy: RemoteData<L, A>): RemoteData<L, A>
 const extend = <L, A, B>(fla: RemoteData<L, A>, f: Function1<RemoteData<L, A>, B>): RemoteData<L, B> => fla.extend(f);
 
 //constructors
-export const failure = <L, A>(error: L): RemoteFailure<L, A> => new RemoteFailure(error);
-export const success: <L, A>(value: A) => RemoteSuccess<L, A> = of;
-export const pending: RemotePending<never, never> = new RemotePending<never, never>();
-export const progress = <L, A>(progress: RemoteProgress): RemotePending<L, A> => new RemotePending(some(progress));
-export const initial: RemoteInitial<never, never> = new RemoteInitial<never, never>();
+export const failure = <L, A>(error: L): RemoteData<L, A> => new RemoteFailure(error);
+export const success: <L, A>(value: A) => RemoteData<L, A> = of;
+export const pending: RemoteData<never, never> = new RemotePending<never, never>();
+export const progress = <L, A>(progress: RemoteProgress): RemoteData<L, A> => new RemotePending(some(progress));
+export const initial: RemoteData<never, never> = new RemoteInitial<never, never>();
 
 //Alternative
 const zero = <L, A>(): RemoteData<L, A> => initial;
@@ -1554,7 +1554,7 @@ export function fromPredicate<L, A>(
 	return a => (predicate(a) ? success(a) : failure(whenFalse(a)));
 }
 
-export function fromProgressEvent<L, A>(event: ProgressEvent): RemotePending<L, A> {
+export function fromProgressEvent<L, A>(event: ProgressEvent): RemoteData<L, A> {
 	return progress({
 		loaded: event.loaded,
 		total: event.lengthComputable ? some(event.total) : none,

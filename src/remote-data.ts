@@ -1,4 +1,4 @@
-import { constFalse, Function2, Function1, Lazy, toString, Predicate } from 'fp-ts/lib/function';
+import { constFalse, Function2, Function1, Lazy, toString, Predicate, identity } from 'fp-ts/lib/function';
 import { Monad2 } from 'fp-ts/lib/Monad';
 import { Foldable2 } from 'fp-ts/lib/Foldable';
 import { Alt2 } from 'fp-ts/lib/Alt';
@@ -391,10 +391,18 @@ export class RemoteInitial<L, A> {
 	}
 
 	/**
-	 * Processes failure error into new RemoteData if function f return some value
+	 * Maps this RemoteFailure error into RemoteSuccess if passed function f return {@link Some} value, otherwise returns self
 	 */
 	recover(f: (error: L) => Option<A>): RemoteData<L, A> {
 		return this;
+	}
+
+	/**
+	 * Recovers this RemoteFailure also mapping RemoteSuccess case
+	 * @see {@link recover}
+	 */
+	recoverMap<B>(f: (error: L) => Option<B>, g: (value: A) => B): RemoteData<L, B> {
+		return this as any;
 	}
 }
 
@@ -502,7 +510,11 @@ export class RemoteFailure<L, A> {
 	}
 
 	recover(f: (error: L) => Option<A>): RemoteData<L, A> {
-		return f(this.error).fold<RemoteData<L, A>>(this, success); //tslint:disable-line no-use-before-declare
+		return this.recoverMap(f, identity);
+	}
+
+	recoverMap<B>(f: (error: L) => Option<B>, g: (value: A) => B): RemoteData<L, B> {
+		return f(this.error).fold(this as any, success); //tslint:disable-line no-use-before-declare
 	}
 }
 
@@ -611,6 +623,10 @@ export class RemoteSuccess<L, A> {
 
 	recover(f: (error: L) => Option<A>): RemoteData<L, A> {
 		return this;
+	}
+
+	recoverMap<B>(f: (error: L) => Option<B>, g: (value: A) => B): RemoteData<L, B> {
+		return this.map(g);
 	}
 }
 
@@ -724,6 +740,10 @@ export class RemotePending<L, A> {
 
 	recover(f: (error: L) => Option<A>): RemoteData<L, A> {
 		return this;
+	}
+
+	recoverMap<B>(f: (error: L) => Option<B>, g: (value: A) => B): RemoteData<L, B> {
+		return this as any;
 	}
 }
 

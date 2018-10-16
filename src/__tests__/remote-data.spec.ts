@@ -765,5 +765,21 @@ describe('RemoteData', () => {
 				expect(successRD.recover(f)).toBe(successRD);
 			});
 		});
+		describe('recoverMap', () => {
+			const f = (error: string) => (error === 'foo' ? some(true) : none);
+			const isOdd = (n: number) => n % 2 === 0;
+			it('initial', () => {
+				expect(initialRD.recoverMap(f, isOdd)).toBe(initialRD);
+			});
+			it('pending', () => {
+				expect(pendingRD.recoverMap(f, isOdd)).toBe(pendingRD);
+			});
+			it('failure', () => {
+				expect(failure<string, number>('foo').recoverMap(f, isOdd)).toEqual(success(true));
+			});
+			it('success', () => {
+				expect(successRD.recoverMap(f, isOdd)).toEqual(success(false));
+			});
+		});
 	});
 });

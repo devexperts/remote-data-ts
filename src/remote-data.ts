@@ -409,174 +409,46 @@ export class RemoteFailure<L, A> {
 
 	constructor(readonly error: L) {}
 
-	/**
-	 * `alt` short for alternative, takes another `RemoteData`.
-	 * If `this` `RemoteData` is a `RemoteSuccess` type then it will be returned.
-	 * If it is a "Left" part then it will return the next `RemoteSuccess` if it exist.
-	 * If both are "Left" parts then it will return next "Left" part.
-	 *
-	 * For example:
-	 *
-	 * `sucess(1).alt(initial) will return success(1)`
-	 *
-	 * `pending.alt(success(2) will return success(2)`
-	 *
-	 * `failure(new Error('err text')).alt(pending) will return pending`
-	 */
 	alt(fy: RemoteData<L, A>): RemoteData<L, A> {
 		return fy;
 	}
 
-	/**
-	 * Similar to `alt`, but lazy: it takes a function which returns `RemoteData` object.
-	 */
 	altL(fy: Lazy<RemoteData<L, A>>): RemoteData<L, A> {
 		return fy();
 	}
 
-	/**
-	 * `ap`, short for "apply". Takes a function `fab` that is in the context of `RemoteData`,
-	 * and applies that function to this `RemoteData`'s value.
-	 * If the `RemoteData` calling `ap` is "Left" part it will return same "Left" part.
-	 * If you pass "Left" part to `ap` as an argument, it will return same "Left" part regardless on `RemoteData` which calls `ap`.
-	 *
-	 * For example:
-	 *
-	 * `success(1).ap(success(x => x + 1)) will return success(2)`.
-	 *
-	 * `success(1).ap(initial) will return initial`.
-	 *
-	 * `pending.ap(success(x => x+1)) will return pending`.
-	 *
-	 * `failure(new Error('err text')).ap(initial) will return initial.`
-	 */
 	ap<B>(fab: RemoteData<L, Function1<A, B>>): RemoteData<L, B> {
 		return fab.fold(initial, fab, () => fab as any, () => this); //tslint:disable-line no-use-before-declare
 	}
 
-	/**
-	 * Takes a function `f` and returns a result of applying it to `RemoteData` value.
-	 * It's a bit like a `map`, but `f` should returns `RemoteData<T>` instead of `T` in `map`.
-	 * If this `RemoteData` is "Left" part, then it will return the same "Left" part.
-	 *
-	 * For example:
-	 *
-	 * `success(1).chain(x => success(x + 1)) will return success(2)`
-	 *
-	 * `success(2).chain(() => pending) will return pending`
-	 *
-	 * `initial.chain(x => success(x)) will return initial`
-	 */
 	chain<B>(f: Function1<A, RemoteData<L, B>>): RemoteData<L, B> {
 		return this as any;
 	}
 
-	/**
-	 * Takes a function `f` and returns a result of applying it to `RemoteData`.
-	 * It's a bit like a `chain`, but `f` should takes `RemoteData<T>` instead of returns it, and it should return T instead of takes it.
-	 */
 	extend<B>(f: Function1<RemoteData<L, A>, B>): RemoteData<L, B> {
 		return this as any;
 	}
 
-	/**
-	 * Needed for "unwrap" value from `RemoteData` "container".
-	 * It applies a function to each case in the data structure.
-	 *
-	 * For example:
-	 *
-	 * `const foldInitial = 'it's initial'
-	 * `const foldPending = 'it's pending'
-	 * `const foldFailure = (err) => 'it's failure'
-	 * `const foldSuccess = (data) => data + 1'
-	 *
-	 * `initial.fold(foldInitial, foldPending, foldFailure, foldSuccess) will return 'it's initial'`
-	 *
-	 * `pending.fold(foldInitial, foldPending, foldFailure, foldSuccess) will return 'it's pending'`
-	 *
-	 * `failure(new Error('error text')).fold(foldInitial, foldPending, foldFailure, foldSuccess) will return 'it's failure'`
-	 *
-	 * `success(21).fold(foldInitial, foldPending, foldFailure, foldSuccess) will return 22`
-	 */
 	fold<B>(initial: B, pending: B, failure: Function1<L, B>, success: Function1<A, B>): B {
 		return failure(this.error);
 	}
 
-	/**
-	 * Same as `fold` but lazy: in `initial` and `pending` state it takes a function instead of value.
-	 *
-	 * For example:
-	 *
-	 * `const foldInitial = () => 'it's initial'
-	 * `const foldPending = () => 'it's pending'
-	 *
-	 * rest of example is similar to `fold`
-	 */
 	foldL<B>(initial: Lazy<B>, pending: Lazy<B>, failure: Function1<L, B>, success: Function1<A, B>): B {
 		return failure(this.error);
 	}
 
-	/**
-	 * Same as `getOrElse` but lazy: it pass as an argument a function which returns a default value.
-	 *
-	 * For example:
-	 *
-	 * `some(1).getOrElse(() => 999) will return 1`
-	 *
-	 * `initial.getOrElseValue(() => 999) will return 999`
-	 */
 	getOrElseL(f: Lazy<A>): A {
 		return f();
 	}
 
-	/**
-	 * Takes a function `f`.
-	 * If it maps on `RemoteSuccess` then it will apply a function to `RemoteData`'s value
-	 * If it maps on "Left" part then it will return the same "Left" part.
-	 *
-	 * For example:
-	 *
-	 * `success(1).map(x => x + 99) will return success(100)`
-	 *
-	 * `initial.map(x => x + 99) will return initial`
-	 *
-	 * `pending.map(x => x + 99) will return pending`
-	 *
-	 * `failure(new Error('error text')).map(x => x + 99) will return failure(new Error('error text')`
-	 */
 	map<B>(f: (a: A) => B): RemoteData<L, B> {
 		return this as any;
 	}
 
-	/**
-	 * Similar to `map`, but it only map a `RemoteFailure` ("Left" part where we have some data, so we can map it).
-	 *
-	 * For example:
-	 *
-	 * `success(1).map(x => 'new error text') will return success(1)`
-	 *
-	 * `initial.map(x => 'new error text') will return initial`
-	 *
-	 * `failure(new Error('error text')).map(x => 'new error text') will return failure(new Error('new error text'))`
-	 */
 	mapLeft<M>(f: Function1<L, M>): RemoteData<M, A> {
 		return failure(f(this.error)); //tslint:disable-line no-use-before-declare
 	}
 
-	/**
-	 * Takes a default value as an argument.
-	 * If this `RemoteData` is "Left" part it will return default value.
-	 * If this `RemoteData` is `RemoteSuccess` it will return it's value ("wrapped" value, not default value)
-	 *
-	 * Note: Default value should be the same type as `RemoteData` (internal) value, if you want to pass different type as default, use `fold` or `foldL`.
-	 *
-	 * For example:
-	 *
-	 * `some(1).getOrElse(999) will return 1`
-	 *
-	 * `initial.getOrElseValue(999) will return 999`
-	 *
-	 */
 	getOrElse(value: A): A {
 		return value;
 	}
@@ -585,149 +457,50 @@ export class RemoteFailure<L, A> {
 		return b;
 	}
 
-	/**
-	 * Returns true only if `RemoteData` is `RemoteInitial`.
-	 *
-	 */
 	isInitial(): this is RemoteInitial<L, A> {
 		return false;
 	}
 
-	/**
-	 * Returns true only if `RemoteData` is `RemotePending`.
-	 *
-	 */
 	isPending(): this is RemotePending<L, A> {
 		return false;
 	}
 
-	/**
-	 * Returns true only if `RemoteData` is `RemoteFailure`.
-	 *
-	 */
 	isFailure(): this is RemoteFailure<L, A> {
 		return true;
 	}
 
-	/**
-	 * Returns true only if `RemoteData` is `RemoteSuccess`.
-	 *
-	 */
 	isSuccess(): this is RemoteSuccess<L, A> {
 		return false;
 	}
 
-	/**
-	 * Convert `RemoteData` to `Option`.
-	 * "Left" part will be converted to `None`.
-	 * `RemoteSuccess` will be converted to `Some`.
-	 *
-	 * For example:
-	 *
-	 * `success(2).toOption() will return some(2)`
-	 *
-	 * `initial.toOption() will return none`
-	 *
-	 * `pending.toOption() will return none`
-	 *
-	 * `failure(new Error('error text')).toOption() will return none`
-	 */
 	toOption(): Option<A> {
 		return none;
 	}
 
-	/**
-	 * Convert `RemoteData` to `Either`.
-	 * "Left" part will be converted to `Left<L>`.
-	 * Since `RemoteInitial` and `RemotePending` do not have `L` values,
-	 * you must provide a value of type `L` that will be used to construct
-	 * the `Left<L>` for those two cases.
-	 * `RemoteSuccess` will be converted to `Right<R>`.
-	 *
-	 * For example:
-	 *
-	 * `const iError = new Error('Data not fetched')`
-	 * `const pError = new Error('Data is fetching')`
-	 *
-	 * `success(2).toEither(iError, pError) will return right(2)`
-	 *
-	 * `initial.toEither(iError, pError) will return right(Error('Data not fetched'))`
-	 *
-	 * `pending.toEither(iError, pError) will return right(Error('Data is fetching'))`
-	 *
-	 * `failure(new Error('error text')).toEither(iError, pError) will return right(Error('error text'))`
-	 */
 	toEither(initial: L, pending: L): Either<L, A> {
 		return left(this.error);
 	}
 
-	/**
-	 * Like `toEither`, but lazy: it takes functions that return an `L` value
-	 * as arguments instead of an `L` value.
-	 *
-	 * For example:
-	 *
-	 * `const iError = () => new Error('Data not fetched')`
-	 * `const pError = () => new Error('Data is fetching')`
-	 *
-	 * `initial.toEither(iError, pError) will return right(Error('Data not fetched'))`
-	 *
-	 * `pending.toEither(iError, pError) will return right(Error('Data is fetching'))`
-	 */
 	toEitherL(initial: Lazy<L>, pending: Lazy<L>): Either<L, A> {
 		return left(this.error);
 	}
 
-	/**
-	 * One more way to fold (unwrap) value from `RemoteData`.
-	 * "Left" part will return `null`.
-	 * `RemoteSuccess` will return value.
-	 *
-	 * For example:
-	 *
-	 * `success(2).toNullable() will return 2`
-	 *
-	 * `initial.toNullable() will return null`
-	 *
-	 * `pending.toNullable() will return null`
-	 *
-	 * `failure(new Error('error text)).toNullable() will return null`
-	 *
-	 */
 	toNullable(): A | null {
 		return null;
 	}
 
-	/**
-	 * Returns string representation of `RemoteData`.
-	 */
 	toString(): string {
 		return `failure(${toString(this.error)})`;
 	}
 
-	/**
-	 * Compare values and returns `true` if they are identical, otherwise returns `false`.
-	 * "Left" part will return `false`.
-	 * `RemoteSuccess` will call `Setoid`'s `equals` method.
-	 *
-	 * If you want to compare `RemoteData`'s values better use `getSetoid` or `getOrd` helpers.
-	 *
-	 */
 	contains(S: Setoid<A>, a: A): boolean {
 		return false;
 	}
 
-	/**
-	 * Takes a predicate and apply it to `RemoteSuccess` value.
-	 * "Left" part will return `false`.
-	 */
 	exists(p: Predicate<A>): boolean {
 		return false;
 	}
 
-	/**
-	 * Processes failure error into new RemoteData if function f return some value
-	 */
 	recover(f: (error: L) => Option<A>): RemoteData<L, A> {
 		return f(this.error).fold<RemoteData<L, A>>(this, success); //tslint:disable-line no-use-before-declare
 	}
@@ -744,174 +517,46 @@ export class RemoteSuccess<L, A> {
 
 	constructor(readonly value: A) {}
 
-	/**
-	 * `alt` short for alternative, takes another `RemoteData`.
-	 * If `this` `RemoteData` is a `RemoteSuccess` type then it will be returned.
-	 * If it is a "Left" part then it will return the next `RemoteSuccess` if it exist.
-	 * If both are "Left" parts then it will return next "Left" part.
-	 *
-	 * For example:
-	 *
-	 * `sucess(1).alt(initial) will return success(1)`
-	 *
-	 * `pending.alt(success(2) will return success(2)`
-	 *
-	 * `failure(new Error('err text')).alt(pending) will return pending`
-	 */
 	alt(fy: RemoteData<L, A>): RemoteData<L, A> {
 		return this;
 	}
 
-	/**
-	 * Similar to `alt`, but lazy: it takes a function which returns `RemoteData` object.
-	 */
 	altL(fy: Lazy<RemoteData<L, A>>): RemoteData<L, A> {
 		return this;
 	}
 
-	/**
-	 * `ap`, short for "apply". Takes a function `fab` that is in the context of `RemoteData`,
-	 * and applies that function to this `RemoteData`'s value.
-	 * If the `RemoteData` calling `ap` is "Left" part it will return same "Left" part.
-	 * If you pass "Left" part to `ap` as an argument, it will return same "Left" part regardless on `RemoteData` which calls `ap`.
-	 *
-	 * For example:
-	 *
-	 * `success(1).ap(success(x => x + 1)) will return success(2)`.
-	 *
-	 * `success(1).ap(initial) will return initial`.
-	 *
-	 * `pending.ap(success(x => x+1)) will return pending`.
-	 *
-	 * `failure(new Error('err text')).ap(initial) will return initial.`
-	 */
 	ap<B>(fab: RemoteData<L, Function1<A, B>>): RemoteData<L, B> {
 		return fab.fold(initial, fab, () => fab as any, value => this.map(value)); //tslint:disable-line no-use-before-declare
 	}
 
-	/**
-	 * Takes a function `f` and returns a result of applying it to `RemoteData` value.
-	 * It's a bit like a `map`, but `f` should returns `RemoteData<T>` instead of `T` in `map`.
-	 * If this `RemoteData` is "Left" part, then it will return the same "Left" part.
-	 *
-	 * For example:
-	 *
-	 * `success(1).chain(x => success(x + 1)) will return success(2)`
-	 *
-	 * `success(2).chain(() => pending) will return pending`
-	 *
-	 * `initial.chain(x => success(x)) will return initial`
-	 */
 	chain<B>(f: Function1<A, RemoteData<L, B>>): RemoteData<L, B> {
 		return f(this.value);
 	}
 
-	/**
-	 * Takes a function `f` and returns a result of applying it to `RemoteData`.
-	 * It's a bit like a `chain`, but `f` should takes `RemoteData<T>` instead of returns it, and it should return T instead of takes it.
-	 */
 	extend<B>(f: Function1<RemoteData<L, A>, B>): RemoteData<L, B> {
 		return of(f(this)); //tslint:disable-line no-use-before-declare
 	}
 
-	/**
-	 * Needed for "unwrap" value from `RemoteData` "container".
-	 * It applies a function to each case in the data structure.
-	 *
-	 * For example:
-	 *
-	 * `const foldInitial = 'it's initial'
-	 * `const foldPending = 'it's pending'
-	 * `const foldFailure = (err) => 'it's failure'
-	 * `const foldSuccess = (data) => data + 1'
-	 *
-	 * `initial.fold(foldInitial, foldPending, foldFailure, foldSuccess) will return 'it's initial'`
-	 *
-	 * `pending.fold(foldInitial, foldPending, foldFailure, foldSuccess) will return 'it's pending'`
-	 *
-	 * `failure(new Error('error text')).fold(foldInitial, foldPending, foldFailure, foldSuccess) will return 'it's failure'`
-	 *
-	 * `success(21).fold(foldInitial, foldPending, foldFailure, foldSuccess) will return 22`
-	 */
 	fold<B>(initial: B, pending: B, failure: Function1<L, B>, success: Function1<A, B>): B {
 		return success(this.value);
 	}
 
-	/**
-	 * Same as `fold` but lazy: in `initial` and `pending` state it takes a function instead of value.
-	 *
-	 * For example:
-	 *
-	 * `const foldInitial = () => 'it's initial'
-	 * `const foldPending = () => 'it's pending'
-	 *
-	 * rest of example is similar to `fold`
-	 */
 	foldL<B>(initial: Lazy<B>, pending: Lazy<B>, failure: Function1<L, B>, success: Function1<A, B>): B {
 		return success(this.value);
 	}
 
-	/**
-	 * Same as `getOrElse` but lazy: it pass as an argument a function which returns a default value.
-	 *
-	 * For example:
-	 *
-	 * `some(1).getOrElse(() => 999) will return 1`
-	 *
-	 * `initial.getOrElseValue(() => 999) will return 999`
-	 */
 	getOrElseL(f: Lazy<A>): A {
 		return this.value;
 	}
 
-	/**
-	 * Takes a function `f`.
-	 * If it maps on `RemoteSuccess` then it will apply a function to `RemoteData`'s value
-	 * If it maps on "Left" part then it will return the same "Left" part.
-	 *
-	 * For example:
-	 *
-	 * `success(1).map(x => x + 99) will return success(100)`
-	 *
-	 * `initial.map(x => x + 99) will return initial`
-	 *
-	 * `pending.map(x => x + 99) will return pending`
-	 *
-	 * `failure(new Error('error text')).map(x => x + 99) will return failure(new Error('error text')`
-	 */
 	map<B>(f: Function1<A, B>): RemoteData<L, B> {
 		return of(f(this.value)); //tslint:disable-line no-use-before-declare
 	}
 
-	/**
-	 * Similar to `map`, but it only map a `RemoteFailure` ("Left" part where we have some data, so we can map it).
-	 *
-	 * For example:
-	 *
-	 * `success(1).map(x => 'new error text') will return success(1)`
-	 *
-	 * `initial.map(x => 'new error text') will return initial`
-	 *
-	 * `failure(new Error('error text')).map(x => 'new error text') will return failure(new Error('new error text'))`
-	 */
 	mapLeft<M>(f: Function1<L, M>): RemoteData<M, A> {
 		return this as any;
 	}
 
-	/**
-	 * Takes a default value as an argument.
-	 * If this `RemoteData` is "Left" part it will return default value.
-	 * If this `RemoteData` is `RemoteSuccess` it will return it's value ("wrapped" value, not default value)
-	 *
-	 * Note: Default value should be the same type as `RemoteData` (internal) value, if you want to pass different type as default, use `fold` or `foldL`.
-	 *
-	 * For example:
-	 *
-	 * `some(1).getOrElse(999) will return 1`
-	 *
-	 * `initial.getOrElseValue(999) will return 999`
-	 *
-	 */
 	getOrElse(value: A): A {
 		return this.value;
 	}
@@ -920,149 +565,50 @@ export class RemoteSuccess<L, A> {
 		return f(b, this.value);
 	}
 
-	/**
-	 * Returns true only if `RemoteData` is `RemoteInitial`.
-	 *
-	 */
 	isInitial(): this is RemoteInitial<L, A> {
 		return false;
 	}
 
-	/**
-	 * Returns true only if `RemoteData` is `RemotePending`.
-	 *
-	 */
 	isPending(): this is RemotePending<L, A> {
 		return false;
 	}
 
-	/**
-	 * Returns true only if `RemoteData` is `RemoteFailure`.
-	 *
-	 */
 	isFailure(): this is RemoteFailure<L, A> {
 		return false;
 	}
 
-	/**
-	 * Returns true only if `RemoteData` is `RemoteSuccess`.
-	 *
-	 */
 	isSuccess(): this is RemoteSuccess<L, A> {
 		return true;
 	}
 
-	/**
-	 * Convert `RemoteData` to `Option`.
-	 * "Left" part will be converted to `None`.
-	 * `RemoteSuccess` will be converted to `Some`.
-	 *
-	 * For example:
-	 *
-	 * `success(2).toOption() will return some(2)`
-	 *
-	 * `initial.toOption() will return none`
-	 *
-	 * `pending.toOption() will return none`
-	 *
-	 * `failure(new Error('error text')).toOption() will return none`
-	 */
 	toOption(): Option<A> {
 		return some(this.value);
 	}
 
-	/**
-	 * Convert `RemoteData` to `Either`.
-	 * "Left" part will be converted to `Left<L>`.
-	 * Since `RemoteInitial` and `RemotePending` do not have `L` values,
-	 * you must provide a value of type `L` that will be used to construct
-	 * the `Left<L>` for those two cases.
-	 * `RemoteSuccess` will be converted to `Right<R>`.
-	 *
-	 * For example:
-	 *
-	 * `const iError = new Error('Data not fetched')`
-	 * `const pError = new Error('Data is fetching')`
-	 *
-	 * `success(2).toEither(iError, pError) will return right(2)`
-	 *
-	 * `initial.toEither(iError, pError) will return right(Error('Data not fetched'))`
-	 *
-	 * `pending.toEither(iError, pError) will return right(Error('Data is fetching'))`
-	 *
-	 * `failure(new Error('error text')).toEither(iError, pError) will return right(Error('error text'))`
-	 */
 	toEither(initial: L, pending: L): Either<L, A> {
 		return right(this.value);
 	}
 
-	/**
-	 * Like `toEither`, but lazy: it takes functions that return an `L` value
-	 * as arguments instead of an `L` value.
-	 *
-	 * For example:
-	 *
-	 * `const iError = () => new Error('Data not fetched')`
-	 * `const pError = () => new Error('Data is fetching')`
-	 *
-	 * `initial.toEither(iError, pError) will return right(Error('Data not fetched'))`
-	 *
-	 * `pending.toEither(iError, pError) will return right(Error('Data is fetching'))`
-	 */
 	toEitherL(initial: Lazy<L>, pending: Lazy<L>): Either<L, A> {
 		return right(this.value);
 	}
 
-	/**
-	 * One more way to fold (unwrap) value from `RemoteData`.
-	 * "Left" part will return `null`.
-	 * `RemoteSuccess` will return value.
-	 *
-	 * For example:
-	 *
-	 * `success(2).toNullable() will return 2`
-	 *
-	 * `initial.toNullable() will return null`
-	 *
-	 * `pending.toNullable() will return null`
-	 *
-	 * `failure(new Error('error text)).toNullable() will return null`
-	 *
-	 */
 	toNullable(): A | null {
 		return this.value;
 	}
 
-	/**
-	 * Returns string representation of `RemoteData`.
-	 */
 	toString(): string {
 		return `success(${toString(this.value)})`;
 	}
 
-	/**
-	 * Compare values and returns `true` if they are identical, otherwise returns `false`.
-	 * "Left" part will return `false`.
-	 * `RemoteSuccess` will call `Setoid`'s `equals` method.
-	 *
-	 * If you want to compare `RemoteData`'s values better use `getSetoid` or `getOrd` helpers.
-	 *
-	 */
 	contains(S: Setoid<A>, a: A): boolean {
 		return S.equals(this.value, a);
 	}
 
-	/**
-	 * Takes a predicate and apply it to `RemoteSuccess` value.
-	 * "Left" part will return `false`.
-	 */
 	exists(p: Predicate<A>): boolean {
 		return p(this.value);
 	}
 
-	/**
-	 * Processes failure error into new RemoteData if function f return some value
-	 */
 	recover(f: (error: L) => Option<A>): RemoteData<L, A> {
 		return this;
 	}
@@ -1079,47 +625,14 @@ export class RemotePending<L, A> {
 
 	constructor(readonly progress: Option<RemoteProgress> = none) {}
 
-	/**
-	 * `alt` short for alternative, takes another `RemoteData`.
-	 * If `this` `RemoteData` is a `RemoteSuccess` type then it will be returned.
-	 * If it is a "Left" part then it will return the next `RemoteSuccess` if it exist.
-	 * If both are "Left" parts then it will return next "Left" part.
-	 *
-	 * For example:
-	 *
-	 * `sucess(1).alt(initial) will return success(1)`
-	 *
-	 * `pending.alt(success(2) will return success(2)`
-	 *
-	 * `failure(new Error('err text')).alt(pending) will return pending`
-	 */
 	alt(fy: RemoteData<L, A>): RemoteData<L, A> {
 		return fy;
 	}
 
-	/**
-	 * Similar to `alt`, but lazy: it takes a function which returns `RemoteData` object.
-	 */
 	altL(fy: Lazy<RemoteData<L, A>>): RemoteData<L, A> {
 		return fy();
 	}
 
-	/**
-	 * `ap`, short for "apply". Takes a function `fab` that is in the context of `RemoteData`,
-	 * and applies that function to this `RemoteData`'s value.
-	 * If the `RemoteData` calling `ap` is "Left" part it will return same "Left" part.
-	 * If you pass "Left" part to `ap` as an argument, it will return same "Left" part regardless on `RemoteData` which calls `ap`.
-	 *
-	 * For example:
-	 *
-	 * `success(1).ap(success(x => x + 1)) will return success(2)`.
-	 *
-	 * `success(1).ap(initial) will return initial`.
-	 *
-	 * `pending.ap(success(x => x+1)) will return pending`.
-	 *
-	 * `failure(new Error('err text')).ap(initial) will return initial.`
-	 */
 	ap<B>(fab: RemoteData<L, Function1<A, B>>): RemoteData<L, B> {
 		return fab.fold(
 			initial, //tslint:disable-line no-use-before-declare
@@ -1129,129 +642,34 @@ export class RemotePending<L, A> {
 		);
 	}
 
-	/**
-	 * Takes a function `f` and returns a result of applying it to `RemoteData` value.
-	 * It's a bit like a `map`, but `f` should returns `RemoteData<T>` instead of `T` in `map`.
-	 * If this `RemoteData` is "Left" part, then it will return the same "Left" part.
-	 *
-	 * For example:
-	 *
-	 * `success(1).chain(x => success(x + 1)) will return success(2)`
-	 *
-	 * `success(2).chain(() => pending) will return pending`
-	 *
-	 * `initial.chain(x => success(x)) will return initial`
-	 */
 	chain<B>(f: Function1<A, RemoteData<L, B>>): RemoteData<L, B> {
 		return pending; //tslint:disable-line no-use-before-declare
 	}
 
-	/**
-	 * Takes a function `f` and returns a result of applying it to `RemoteData`.
-	 * It's a bit like a `chain`, but `f` should takes `RemoteData<T>` instead of returns it, and it should return T instead of takes it.
-	 */
 	extend<B>(f: Function1<RemoteData<L, A>, B>): RemoteData<L, B> {
 		return pending; //tslint:disable-line no-use-before-declare
 	}
 
-	/**
-	 * Needed for "unwrap" value from `RemoteData` "container".
-	 * It applies a function to each case in the data structure.
-	 *
-	 * For example:
-	 *
-	 * `const foldInitial = 'it's initial'
-	 * `const foldPending = 'it's pending'
-	 * `const foldFailure = (err) => 'it's failure'
-	 * `const foldSuccess = (data) => data + 1'
-	 *
-	 * `initial.fold(foldInitial, foldPending, foldFailure, foldSuccess) will return 'it's initial'`
-	 *
-	 * `pending.fold(foldInitial, foldPending, foldFailure, foldSuccess) will return 'it's pending'`
-	 *
-	 * `failure(new Error('error text')).fold(foldInitial, foldPending, foldFailure, foldSuccess) will return 'it's failure'`
-	 *
-	 * `success(21).fold(foldInitial, foldPending, foldFailure, foldSuccess) will return 22`
-	 */
 	fold<B>(initial: B, pending: B, failure: Function1<L, B>, success: Function1<A, B>): B {
 		return pending;
 	}
 
-	/**
-	 * Same as `fold` but lazy: in `initial` and `pending` state it takes a function instead of value.
-	 *
-	 * For example:
-	 *
-	 * `const foldInitial = () => 'it's initial'
-	 * `const foldPending = () => 'it's pending'
-	 *
-	 * rest of example is similar to `fold`
-	 */
 	foldL<B>(initial: Lazy<B>, pending: Lazy<B>, failure: Function1<L, B>, success: Function1<A, B>): B {
 		return pending();
 	}
 
-	/**
-	 * Same as `getOrElse` but lazy: it pass as an argument a function which returns a default value.
-	 *
-	 * For example:
-	 *
-	 * `some(1).getOrElse(() => 999) will return 1`
-	 *
-	 * `initial.getOrElseValue(() => 999) will return 999`
-	 */
 	getOrElseL(f: Lazy<A>): A {
 		return f();
 	}
 
-	/**
-	 * Takes a function `f`.
-	 * If it maps on `RemoteSuccess` then it will apply a function to `RemoteData`'s value
-	 * If it maps on "Left" part then it will return the same "Left" part.
-	 *
-	 * For example:
-	 *
-	 * `success(1).map(x => x + 99) will return success(100)`
-	 *
-	 * `initial.map(x => x + 99) will return initial`
-	 *
-	 * `pending.map(x => x + 99) will return pending`
-	 *
-	 * `failure(new Error('error text')).map(x => x + 99) will return failure(new Error('error text')`
-	 */
 	map<B>(f: Function1<A, B>): RemoteData<L, B> {
 		return this as any;
 	}
 
-	/**
-	 * Similar to `map`, but it only map a `RemoteFailure` ("Left" part where we have some data, so we can map it).
-	 *
-	 * For example:
-	 *
-	 * `success(1).map(x => 'new error text') will return success(1)`
-	 *
-	 * `initial.map(x => 'new error text') will return initial`
-	 *
-	 * `failure(new Error('error text')).map(x => 'new error text') will return failure(new Error('new error text'))`
-	 */
 	mapLeft<M>(f: Function1<L, M>): RemoteData<M, A> {
 		return pending; //tslint:disable-line no-use-before-declare
 	}
 
-	/**
-	 * Takes a default value as an argument.
-	 * If this `RemoteData` is "Left" part it will return default value.
-	 * If this `RemoteData` is `RemoteSuccess` it will return it's value ("wrapped" value, not default value)
-	 *
-	 * Note: Default value should be the same type as `RemoteData` (internal) value, if you want to pass different type as default, use `fold` or `foldL`.
-	 *
-	 * For example:
-	 *
-	 * `some(1).getOrElse(999) will return 1`
-	 *
-	 * `initial.getOrElseValue(999) will return 999`
-	 *
-	 */
 	getOrElse(value: A): A {
 		return value;
 	}
@@ -1260,149 +678,50 @@ export class RemotePending<L, A> {
 		return b;
 	}
 
-	/**
-	 * Returns true only if `RemoteData` is `RemoteInitial`.
-	 *
-	 */
 	isInitial(): this is RemoteInitial<L, A> {
 		return false;
 	}
 
-	/**
-	 * Returns true only if `RemoteData` is `RemotePending`.
-	 *
-	 */
 	isPending(): this is RemotePending<L, A> {
 		return true;
 	}
 
-	/**
-	 * Returns true only if `RemoteData` is `RemoteFailure`.
-	 *
-	 */
 	isFailure(): this is RemoteFailure<L, A> {
 		return false;
 	}
 
-	/**
-	 * Returns true only if `RemoteData` is `RemoteSuccess`.
-	 *
-	 */
 	isSuccess(): this is RemoteSuccess<L, A> {
 		return false;
 	}
 
-	/**
-	 * Convert `RemoteData` to `Option`.
-	 * "Left" part will be converted to `None`.
-	 * `RemoteSuccess` will be converted to `Some`.
-	 *
-	 * For example:
-	 *
-	 * `success(2).toOption() will return some(2)`
-	 *
-	 * `initial.toOption() will return none`
-	 *
-	 * `pending.toOption() will return none`
-	 *
-	 * `failure(new Error('error text')).toOption() will return none`
-	 */
 	toOption(): Option<A> {
 		return none;
 	}
 
-	/**
-	 * Convert `RemoteData` to `Either`.
-	 * "Left" part will be converted to `Left<L>`.
-	 * Since `RemoteInitial` and `RemotePending` do not have `L` values,
-	 * you must provide a value of type `L` that will be used to construct
-	 * the `Left<L>` for those two cases.
-	 * `RemoteSuccess` will be converted to `Right<R>`.
-	 *
-	 * For example:
-	 *
-	 * `const iError = new Error('Data not fetched')`
-	 * `const pError = new Error('Data is fetching')`
-	 *
-	 * `success(2).toEither(iError, pError) will return right(2)`
-	 *
-	 * `initial.toEither(iError, pError) will return right(Error('Data not fetched'))`
-	 *
-	 * `pending.toEither(iError, pError) will return right(Error('Data is fetching'))`
-	 *
-	 * `failure(new Error('error text')).toEither(iError, pError) will return right(Error('error text'))`
-	 */
 	toEither(initial: L, pending: L): Either<L, A> {
 		return left(pending);
 	}
 
-	/**
-	 * Like `toEither`, but lazy: it takes functions that return an `L` value
-	 * as arguments instead of an `L` value.
-	 *
-	 * For example:
-	 *
-	 * `const iError = () => new Error('Data not fetched')`
-	 * `const pError = () => new Error('Data is fetching')`
-	 *
-	 * `initial.toEither(iError, pError) will return right(Error('Data not fetched'))`
-	 *
-	 * `pending.toEither(iError, pError) will return right(Error('Data is fetching'))`
-	 */
 	toEitherL(initial: Lazy<L>, pending: Lazy<L>): Either<L, A> {
 		return left(pending());
 	}
 
-	/**
-	 * One more way to fold (unwrap) value from `RemoteData`.
-	 * "Left" part will return `null`.
-	 * `RemoteSuccess` will return value.
-	 *
-	 * For example:
-	 *
-	 * `success(2).toNullable() will return 2`
-	 *
-	 * `initial.toNullable() will return null`
-	 *
-	 * `pending.toNullable() will return null`
-	 *
-	 * `failure(new Error('error text)).toNullable() will return null`
-	 *
-	 */
 	toNullable(): A | null {
 		return null;
 	}
 
-	/**
-	 * Returns string representation of `RemoteData`.
-	 */
 	toString(): string {
 		return 'pending';
 	}
 
-	/**
-	 * Compare values and returns `true` if they are identical, otherwise returns `false`.
-	 * "Left" part will return `false`.
-	 * `RemoteSuccess` will call `Setoid`'s `equals` method.
-	 *
-	 * If you want to compare `RemoteData`'s values better use `getSetoid` or `getOrd` helpers.
-	 *
-	 */
 	contains(S: Setoid<A>, a: A): boolean {
 		return false;
 	}
 
-	/**
-	 * Takes a predicate and apply it to `RemoteSuccess` value.
-	 * "Left" part will return `false`.
-	 */
 	exists(p: Predicate<A>): boolean {
 		return false;
 	}
 
-	/**
-	 * Processes failure error into new RemoteData if function f return some value
-	 */
 	recover(f: (error: L) => Option<A>): RemoteData<L, A> {
 		return this;
 	}

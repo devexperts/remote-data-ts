@@ -517,16 +517,16 @@ describe('RemoteData', () => {
 		});
 		describe('fold', () => {
 			it('initial', () => {
-				expect(initialRD.fold(1, () => 2, () => 3, () => 4)).toBe(1);
+				expect(initialRD.fold(1, 2, () => 3, () => 4)).toBe(1);
 			});
 			it('pending', () => {
-				expect(pendingRD.fold(1, () => 2, () => 3, () => 4)).toBe(2);
+				expect(pendingRD.fold(1, 2, () => 3, () => 4)).toBe(2);
 			});
 			it('failure', () => {
-				expect(failureRD.fold(1, () => 2, () => 3, () => 4)).toBe(3);
+				expect(failureRD.fold(1, 2, () => 3, () => 4)).toBe(3);
 			});
 			it('success', () => {
-				expect(successRD.fold(1, () => 2, () => 3, () => 4)).toBe(4);
+				expect(successRD.fold(1, 2, () => 3, () => 4)).toBe(4);
 			});
 		});
 		describe('foldL', () => {

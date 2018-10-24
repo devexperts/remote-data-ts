@@ -163,12 +163,7 @@ export class RemoteInitial<L, A> {
 	 *
 	 * `success(21).fold(foldInitial, foldPending, foldFailure, foldSuccess) will return 22`
 	 */
-	fold<B>(
-		initial: B,
-		pending: Function1<Option<RemoteProgress>, B>,
-		failure: Function1<L, B>,
-		success: Function1<A, B>,
-	): B {
+	fold<B>(initial: B, pending: B, failure: Function1<L, B>, success: Function1<A, B>): B {
 		return initial;
 	}
 
@@ -436,7 +431,7 @@ export class RemoteFailure<L, A> {
 	}
 
 	ap<B>(fab: RemoteData<L, Function1<A, B>>): RemoteData<L, B> {
-		return fab.fold(initial, () => fab, () => fab as any, () => this); //tslint:disable-line no-use-before-declare
+		return fab.fold(initial, fab, () => fab as any, () => this); //tslint:disable-line no-use-before-declare
 	}
 
 	chain<B>(f: Function1<A, RemoteData<L, B>>): RemoteData<L, B> {
@@ -447,12 +442,7 @@ export class RemoteFailure<L, A> {
 		return this as any;
 	}
 
-	fold<B>(
-		initial: B,
-		pending: Function1<Option<RemoteProgress>, B>,
-		failure: Function1<L, B>,
-		success: Function1<A, B>,
-	): B {
+	fold<B>(initial: B, pending: B, failure: Function1<L, B>, success: Function1<A, B>): B {
 		return failure(this.error);
 	}
 
@@ -558,7 +548,7 @@ export class RemoteSuccess<L, A> {
 	}
 
 	ap<B>(fab: RemoteData<L, Function1<A, B>>): RemoteData<L, B> {
-		return fab.fold(initial, () => fab, () => fab as any, value => this.map(value)); //tslint:disable-line no-use-before-declare
+		return fab.fold(initial, fab, () => fab as any, value => this.map(value)); //tslint:disable-line no-use-before-declare
 	}
 
 	chain<B>(f: Function1<A, RemoteData<L, B>>): RemoteData<L, B> {
@@ -569,12 +559,7 @@ export class RemoteSuccess<L, A> {
 		return of(f(this)); //tslint:disable-line no-use-before-declare
 	}
 
-	fold<B>(
-		initial: B,
-		pending: Function1<Option<RemoteProgress>, B>,
-		failure: Function1<L, B>,
-		success: Function1<A, B>,
-	): B {
+	fold<B>(initial: B, pending: B, failure: Function1<L, B>, success: Function1<A, B>): B {
 		return success(this.value);
 	}
 
@@ -682,7 +667,7 @@ export class RemotePending<L, A> {
 	ap<B>(fab: RemoteData<L, Function1<A, B>>): RemoteData<L, B> {
 		return fab.fold(
 			initial, //tslint:disable-line no-use-before-declare
-			() => (fab.isPending() ? (concatPendings(this, fab as any) as any) : this),
+			fab.isPending() ? (concatPendings(this, fab as any) as any) : this,
 			() => this,
 			() => this,
 		);
@@ -696,13 +681,8 @@ export class RemotePending<L, A> {
 		return pending; //tslint:disable-line no-use-before-declare
 	}
 
-	fold<B>(
-		initial: B,
-		pending: Function1<Option<RemoteProgress>, B>,
-		failure: Function1<L, B>,
-		success: Function1<A, B>,
-	): B {
-		return pending(this.progress);
+	fold<B>(initial: B, pending: B, failure: Function1<L, B>, success: Function1<A, B>): B {
+		return pending;
 	}
 
 	foldL<B>(
@@ -878,10 +858,10 @@ export const getOrd = <L, A>(OL: Ord<L>, OA: Ord<A>): Ord<RemoteData<L, A>> => {
 		compare: (x, y) =>
 			sign(
 				x.foldL(
-					() => y.fold(0, () => -1, () => -1, () => -1),
-					() => y.fold(1, () => 0, () => -1, () => -1),
-					xError => y.fold(1, () => 1, yError => OL.compare(xError, yError), () => -1),
-					xValue => y.fold(1, () => 1, () => 1, yValue => OA.compare(xValue, yValue)),
+					() => y.fold(0, -1, () => -1, () => -1),
+					() => y.fold(1, 0, () => -1, () => -1),
+					xError => y.fold(1, 1, yError => OL.compare(xError, yError), () => -1),
+					xValue => y.fold(1, 1, () => 1, yValue => OA.compare(xValue, yValue)),
 				),
 			),
 	};
@@ -892,11 +872,11 @@ export const getSemigroup = <L, A>(SL: Semigroup<L>, SA: Semigroup<A>): Semigrou
 	return {
 		concat: (x, y) => {
 			return x.foldL(
-				() => y.fold(y, () => y, () => y, () => y),
+				() => y.fold(y, y, () => y, () => y),
 				() => y.foldL(() => x, () => concatPendings(x as any, y as any), () => y, () => y),
 
-				xError => y.fold(x, () => x, yError => failure(SL.concat(xError, yError)), () => y),
-				xValue => y.fold(x, () => x, () => x, yValue => success(SA.concat(xValue, yValue))),
+				xError => y.fold(x, x, yError => failure(SL.concat(xError, yError)), () => y),
+				xValue => y.fold(x, x, () => x, yValue => success(SA.concat(xValue, yValue))),
 			);
 		},
 	};

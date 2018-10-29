@@ -1,4 +1,4 @@
-import { createRemoteDataFromJSON } from '../io-ts';
+import { createRemoteDataFromJSON } from '../remote-data-io';
 import * as t from 'io-ts';
 import { initial, pending, failure, success, progress } from '../remote-data';
 import { right } from 'fp-ts/lib/Either';

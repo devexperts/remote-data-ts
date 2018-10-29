@@ -177,7 +177,12 @@ export class RemoteInitial<L, A> {
 	 *
 	 * rest of example is similar to `fold`
 	 */
-	foldL<B>(initial: Lazy<B>, pending: Lazy<B>, failure: Function1<L, B>, success: Function1<A, B>): B {
+	foldL<B>(
+		initial: Lazy<B>,
+		pending: Function1<Option<RemoteProgress>, B>,
+		failure: Function1<L, B>,
+		success: Function1<A, B>,
+	): B {
 		return initial();
 	}
 
@@ -441,7 +446,12 @@ export class RemoteFailure<L, A> {
 		return failure(this.error);
 	}
 
-	foldL<B>(initial: Lazy<B>, pending: Lazy<B>, failure: Function1<L, B>, success: Function1<A, B>): B {
+	foldL<B>(
+		initial: Lazy<B>,
+		pending: Function1<Option<RemoteProgress>, B>,
+		failure: Function1<L, B>,
+		success: Function1<A, B>,
+	): B {
 		return failure(this.error);
 	}
 
@@ -553,7 +563,12 @@ export class RemoteSuccess<L, A> {
 		return success(this.value);
 	}
 
-	foldL<B>(initial: Lazy<B>, pending: Lazy<B>, failure: Function1<L, B>, success: Function1<A, B>): B {
+	foldL<B>(
+		initial: Lazy<B>,
+		pending: Function1<Option<RemoteProgress>, B>,
+		failure: Function1<L, B>,
+		success: Function1<A, B>,
+	): B {
 		return success(this.value);
 	}
 
@@ -670,8 +685,13 @@ export class RemotePending<L, A> {
 		return pending;
 	}
 
-	foldL<B>(initial: Lazy<B>, pending: Lazy<B>, failure: Function1<L, B>, success: Function1<A, B>): B {
-		return pending();
+	foldL<B>(
+		initial: Lazy<B>,
+		pending: Function1<Option<RemoteProgress>, B>,
+		failure: Function1<L, B>,
+		success: Function1<A, B>,
+	): B {
+		return pending(this.progress);
 	}
 
 	getOrElseL(f: Lazy<A>): A {

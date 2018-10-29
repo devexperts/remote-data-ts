@@ -116,7 +116,7 @@ export function createRemoteDataFromJSON<
 		a =>
 			a.foldL<JSONRemoteData<OL, OR>>(
 				() => ({ type: 'Initial' }),
-				() => ({ type: 'Pending', progress: JSONProgress.encode((a as any).progress) }),
+				progress => ({ type: 'Pending', progress: JSONProgress.encode(progress) }),
 				l => ({ type: 'Failure', error: leftType.encode(l) }),
 				a => ({ type: 'Success', value: rightType.encode(a) }),
 			),

@@ -1,3 +1,14 @@
+<a name="0.4.0"></a>
+# [0.4.0](https://github.com/devex-web-frontend/remote-data-ts/compare/v0.3.1...v0.4.0) (2018-11-06)
+
+
+### Features
+
+* add io-ts type ([#19](https://github.com/devex-web-frontend/remote-data-ts/issues/19)) ([41d7fe3](https://github.com/devex-web-frontend/remote-data-ts/commit/41d7fe3))
+* provide progress parameter via fold pending parameter ([#20](https://github.com/devex-web-frontend/remote-data-ts/issues/20)) ([1cf41ce](https://github.com/devex-web-frontend/remote-data-ts/commit/1cf41ce))
+
+
+
 <a name="0.3.1"></a>
 ## [0.3.1](https://github.com/devex-web-frontend/remote-data-ts/compare/v0.3.0...v0.3.1) (2018-10-16)
 

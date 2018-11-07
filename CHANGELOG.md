@@ -1,3 +1,13 @@
+<a name="0.4.1"></a>
+## [0.4.1](https://github.com/devex-web-frontend/remote-data-ts/compare/v0.4.0...v0.4.1) (2018-11-07)
+
+
+### Features
+
+* relax getMonoid dependencies to Semigroup instances instead of Monoid ([#21](https://github.com/devex-web-frontend/remote-data-ts/issues/21)) ([2b082b2](https://github.com/devex-web-frontend/remote-data-ts/commit/2b082b2))
+
+
+
 <a name="0.4.0"></a>
 # [0.4.0](https://github.com/devex-web-frontend/remote-data-ts/compare/v0.3.1...v0.4.0) (2018-11-06)
 

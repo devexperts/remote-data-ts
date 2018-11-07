@@ -883,9 +883,9 @@ export const getSemigroup = <L, A>(SL: Semigroup<L>, SA: Semigroup<A>): Semigrou
 };
 
 //Monoid
-export const getMonoid = <L, A>(ML: Monoid<L>, MA: Monoid<A>): Monoid<RemoteData<L, A>> => {
+export const getMonoid = <L, A>(SL: Semigroup<L>, SA: Semigroup<A>): Monoid<RemoteData<L, A>> => {
 	return {
-		...getSemigroup(ML, MA),
+		...getSemigroup(SL, SA),
 		empty: initial,
 	};
 };

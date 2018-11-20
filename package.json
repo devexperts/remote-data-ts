@@ -1,8 +1,8 @@
 {
   "name": "@devexperts/remote-data-ts",
   "version": "0.4.1",
-  "main": "dist/index.js",
-  "typings": "dist/index.d.ts",
+  "main": "dist/remote-data.js",
+  "typings": "dist/remote-data.d.ts",
   "scripts": {
     "build": "tsc",
     "test": "npm run tslint && npm run prettier && npm run jest",

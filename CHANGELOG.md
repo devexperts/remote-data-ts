@@ -1,21 +1,36 @@
+<a name="0.4.2"></a>
+## [0.4.2](https://github.com/devex-web-frontend/remote-data-ts/compare/v0.4.1...v0.4.2) (2018-11-20)
+
+
+### Bug Fixes
+
+* move peer dependencies to dependencies ([#24](https://github.com/devex-web-frontend/remote-data-ts/issues/24)) ([0812d29](https://github.com/devex-web-frontend/remote-data-ts/commit/0812d29)), closes [#23](https://github.com/devex-web-frontend/remote-data-ts/issues/23)
+
+
+
 <a name="0.4.1"></a>
-## [0.4.1](https://github.com/devex-web-frontend/remote-data-ts/compare/v0.4.0...v0.4.1) (2018-11-07)
+## [0.4.1](https://github.com/devex-web-frontend/remote-data-ts/compare/v0.4.0...v0.4.1) (2018-11-20)
 
 
 ### Features
 
-* relax getMonoid dependencies to Semigroup instances instead of Monoid ([#21](https://github.com/devex-web-frontend/remote-data-ts/issues/21)) ([2b082b2](https://github.com/devex-web-frontend/remote-data-ts/commit/2b082b2))
+* relax getMonoid dependencies to Semigroup instances instead of Monoid ([#21](https://github.com/devex-web-frontend/remote-data-ts/issues/21)) ([d7b060e](https://github.com/devex-web-frontend/remote-data-ts/commit/d7b060e))
 
 
 
 <a name="0.4.0"></a>
-# [0.4.0](https://github.com/devex-web-frontend/remote-data-ts/compare/v0.3.1...v0.4.0) (2018-11-06)
+# [0.4.0](https://github.com/devex-web-frontend/remote-data-ts/compare/v0.3.1...v0.4.0) (2018-11-20)
 
 
 ### Features
 
-* add io-ts type ([#19](https://github.com/devex-web-frontend/remote-data-ts/issues/19)) ([41d7fe3](https://github.com/devex-web-frontend/remote-data-ts/commit/41d7fe3))
+* add io-ts type ([#19](https://github.com/devex-web-frontend/remote-data-ts/issues/19)) ([7d6785f](https://github.com/devex-web-frontend/remote-data-ts/commit/7d6785f))
 * provide progress parameter via fold pending parameter ([#20](https://github.com/devex-web-frontend/remote-data-ts/issues/20)) ([1cf41ce](https://github.com/devex-web-frontend/remote-data-ts/commit/1cf41ce))
+
+
+### BREAKING CHANGES
+
+* add io-ts and io-ts-types to peer-dependencies
 
 
 

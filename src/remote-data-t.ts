@@ -73,14 +73,14 @@ export function failure<F>(F: Functor<F>): <L, A>(fl: HKT<F, L>) => HKT<F, Remot
 	return ml => F.map(ml, l => RD.failure(l));
 }
 
-export function fromEither<F extends URIS2>(
+export function fromRemoteData<F extends URIS2>(
 	F: Applicative2<F>,
 ): <L, M, A>(fa: RemoteData<L, A>) => Type2<F, M, RemoteData<L, A>>;
-export function fromEither<F extends URIS>(
+export function fromRemoteData<F extends URIS>(
 	F: Applicative1<F>,
 ): <L, A>(fa: RemoteData<L, A>) => Type<F, RemoteData<L, A>>;
-export function fromEither<F>(F: Applicative<F>): <L, A>(fa: RemoteData<L, A>) => HKT<F, RemoteData<L, A>>;
-export function fromEither<F>(F: Applicative<F>): <L, A>(fa: RemoteData<L, A>) => HKT<F, RemoteData<L, A>> {
+export function fromRemoteData<F>(F: Applicative<F>): <L, A>(fa: RemoteData<L, A>) => HKT<F, RemoteData<L, A>>;
+export function fromRemoteData<F>(F: Applicative<F>): <L, A>(fa: RemoteData<L, A>) => HKT<F, RemoteData<L, A>> {
 	return oa => F.of(oa);
 }
 

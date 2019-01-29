@@ -828,25 +828,12 @@ const traverse = <F>(F: Applicative<F>) => <L, A, B>(
 ): HKT<F, RemoteData<L, B>> => {
 	if (ta.isSuccess()) {
 		return F.map<B, RemoteData<L, B>>(f(ta.value), of);
-	} else if (ta.isFailure()) {
-		return F.of((ta as unknown) as RemoteFailure<L, B>);
-	} else if (ta.isInitial()) {
-		return F.of((ta as unknown) as RemoteInitial<L, B>);
 	} else {
-		return F.of((ta as unknown) as RemotePending<L, B>);
+		return F.of((ta as unknown) as RemoteFailure<L, B> | RemoteInitial<L, B> | RemotePending<L, B>);
 	}
 };
-const sequence = <F>(F: Applicative<F>) => <L, A>(ta: RemoteData<L, HKT<F, A>>): HKT<F, RemoteData<L, A>> => {
-	if (ta.isSuccess()) {
-		return F.map<A, RemoteData<L, A>>(ta.value, of);
-	} else if (ta.isFailure()) {
-		return F.of((ta as unknown) as RemoteFailure<L, A>);
-	} else if (ta.isInitial()) {
-		return F.of((ta as unknown) as RemoteInitial<L, A>);
-	} else {
-		return F.of((ta as unknown) as RemotePending<L, A>);
-	}
-};
+const sequence = <F>(F: Applicative<F>) => <L, A>(ta: RemoteData<L, HKT<F, A>>): HKT<F, RemoteData<L, A>> =>
+	traverse(F)(ta, identity);
 
 //Bifunctor
 const bimap = <L, V, A, B>(fla: RemoteData<L, A>, f: (u: L) => V, g: (a: A) => B): RemoteData<V, B> => {

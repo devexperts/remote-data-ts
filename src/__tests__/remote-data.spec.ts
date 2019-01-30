@@ -17,7 +17,6 @@ import {
 	fromProgressEvent,
 } from '../remote-data';
 import { identity, compose, Function1 } from 'fp-ts/lib/function';
-import { sequence, traverse } from 'fp-ts/lib/Traversable';
 import { none, option, some } from 'fp-ts/lib/Option';
 import { array } from 'fp-ts/lib/Array';
 import { setoidNumber, setoidString } from 'fp-ts/lib/Setoid';
@@ -128,20 +127,20 @@ describe('RemoteData', () => {
 				expect(initialRD.ap(initial)).toBe(initialRD);
 				expect(initialRD.ap(pending)).toBe(initialRD);
 				expect(initialRD.ap(progressRD)).toBe(initialRD);
-				expect(initialRD.ap(failedF)).toBe(initialRD);
+				expect(initialRD.ap(failedF)).toBe(failedF);
 				expect(initialRD.ap(f)).toBe(initialRD);
 			});
 			it('pending', () => {
 				expect(pendingRD.ap(initial)).toBe(initial);
 				expect(pendingRD.ap(pending)).toBe(pendingRD);
 				expect(pendingRD.ap(progressRD)).toBe(progressRD);
-				expect(pendingRD.ap(failedF)).toBe(pendingRD);
+				expect(pendingRD.ap(failedF)).toBe(failedF);
 				expect(pendingRD.ap(f)).toBe(pendingRD);
 			});
 			it('failure', () => {
-				expect(failureRD.ap(initial)).toBe(initial);
-				expect(failureRD.ap(pending)).toBe(pending);
-				expect(failureRD.ap(progressRD)).toBe(progressRD);
+				expect(failureRD.ap(initial)).toBe(failureRD);
+				expect(failureRD.ap(pending)).toBe(failureRD);
+				expect(failureRD.ap(progressRD)).toBe(failureRD);
 				expect(failureRD.ap(failedF)).toBe(failedF);
 				expect(failureRD.ap(f)).toBe(failureRD);
 			});
@@ -156,7 +155,7 @@ describe('RemoteData', () => {
 	});
 	describe('Applicative', () => {
 		describe('sequence', () => {
-			const s = sequence(remoteData, array);
+			const s = array.sequence(remoteData);
 			it('initial', () => {
 				expect(s([initialRD, successRD])).toBe(initialRD);
 			});
@@ -216,9 +215,9 @@ describe('RemoteData', () => {
 			});
 		});
 	});
-	describe('Traversable', () => {
+	describe('Traversable2v', () => {
 		describe('traverse', () => {
-			const t = traverse(option, remoteData);
+			const t = remoteData.traverse(option);
 			const f = (x: number) => (x >= 2 ? some(x) : none);
 			it('initial', () => {
 				expect(t(initialRD, f)).toEqual(some(initialRD));
@@ -235,20 +234,53 @@ describe('RemoteData', () => {
 			});
 		});
 	});
-	describe('Foldable', () => {
+	describe('Foldable2v', () => {
 		describe('reduce', () => {
 			const f = (a: number, b: number) => a + b;
+			const g = (a: number) => a + 1;
 			it('initial', () => {
 				expect(initialRD.reduce(f, 1)).toBe(1);
+				expect(remoteData.foldMap(monoidSum)(initialRD, g)).toBe(0);
+				expect(remoteData.foldr(initialRD, 1, f)).toBe(1);
 			});
 			it('pending', () => {
 				expect(pendingRD.reduce(f, 1)).toBe(1);
+				expect(remoteData.foldMap(monoidSum)(pendingRD, g)).toBe(0);
+				expect(remoteData.foldr(pendingRD, 1, f)).toBe(1);
 			});
 			it('failure', () => {
 				expect(failureRD.reduce(f, 1)).toBe(1);
+				expect(remoteData.foldMap(monoidSum)(failureRD, g)).toBe(0);
+				expect(remoteData.foldr(failureRD, 1, f)).toBe(1);
+			});
+			it('success', () => {
+				expect(successRD.reduce(f, 1)).toBe(2);
+				expect(remoteData.foldMap(monoidSum)(successRD, g)).toBe(2);
+				expect(remoteData.foldr(successRD, 1, f)).toBe(2);
+			});
+		});
+	});
+	describe('Bifunctor', () => {
+		describe('bimap', () => {
+			const f = (l: string): string => `Error: ${l}`;
+			const g = (a: number): number => a + 1;
+			it('initial', () => {
+				expect(initialRD.bimap(f, g)).toBe(initial);
+				expect(initialRD.bimap(identity, identity)).toBe(initial);
+			});
+			it('pending', () => {
+				expect(pendingRD.bimap(f, g)).toBe(pending);
+				expect(pendingRD.bimap(identity, identity)).toBe(pending);
 			});
 			it('failure', () => {
-				expect(success(1).reduce(f, 1)).toBe(2);
+				expect(failureRD.bimap(f, g)).toEqual(failureRD.mapLeft(f));
+				expect(failureRD.bimap(f, g)).toEqual(failure('Error: foo'));
+				expect(failureRD.bimap(identity, identity)).toEqual(failureRD);
+			});
+			it('success', () => {
+				expect(successRD.bimap(f, g)).toEqual(successRD.map(g));
+				expect(successRD.bimap(f, g)).toEqual(success(2));
+				expect(successRD.bimap(identity, identity)).toEqual(successRD);
 			});
 		});
 	});
@@ -397,54 +429,53 @@ describe('RemoteData', () => {
 			it('should combine all successes to success of list of values', () => {
 				expect(combine(success('foo'), success('bar'))).toEqual(success(['foo', 'bar']));
 			});
-			it('should combine arbitrary values to first initial', () => {
-				const values = [success(123), success('foo'), failure('bar'), pending, initial];
-				expect(combine.apply(null, values)).toBe(initial);
-				expect(combine.apply(null, values.reverse())).toBe(initial);
+			it('should combine arbitrary non-failure values to first initial', () => {
+				expect(combine(success(123), success('foo'), pending, initial)).toBe(initial);
+				expect(combine(initial, pending, success('foo'), success(123))).toBe(initial);
 			});
-			it('should combine arbitrary values to first pending', () => {
-				const values = [success(123), success('foo'), failure('bar'), pending];
-				expect(combine.apply(null, values)).toBe(pending);
-				expect(combine.apply(null, values.reverse())).toBe(pending);
+			it('should combine arbitrary non-failure & non-initial values to first pending', () => {
+				expect(combine(success(123), success('foo'), pending)).toBe(pending);
+				expect(combine(pending, success('foo'), success(123))).toBe(pending);
 			});
 			it('should combine arbitrary values to first failure', () => {
-				const values = [success(123), success('foo'), failure('bar')];
-				expect(combine.apply(null, values)).toEqual(failure('bar'));
-				expect(combine.apply(null, values.reverse())).toEqual(failure('bar'));
+				expect(combine(success(123), success('foo'), failure('bar'))).toEqual(failure('bar'));
+				expect(combine(failure('bar'), success('foo'), success(123))).toEqual(failure('bar'));
 			});
 			describe('progress', () => {
 				it('should combine pendings without progress', () => {
-					const values = [pending, pending];
-					expect(combine.apply(null, values)).toBe(pending);
-					expect(combine.apply(null, values.reverse())).toBe(pending);
+					expect(combine(pending, pending)).toBe(pending);
+					expect(combine(pending, pending, pending)).toBe(pending);
+					expect(combine(pending, pending, pending, pending)).toBe(pending);
 				});
 				it('should combine pending and progress', () => {
 					const withProgress = progress({ loaded: 1, total: none });
-					const values = [pending, withProgress];
-					expect(combine.apply(null, values)).toBe(withProgress);
-					expect(combine.apply(null, values.reverse())).toBe(withProgress);
+					expect(combine(pending, withProgress)).toBe(withProgress);
+					expect(combine(withProgress, pending)).toBe(withProgress);
 				});
 				it('should combine progress without total', () => {
 					const withProgress = progress({ loaded: 1, total: none });
-					const values = [withProgress, withProgress];
-					expect(combine.apply(null, values)).toEqual(progress({ loaded: 2, total: none }));
-					expect(combine.apply(null, values.reverse())).toEqual(progress({ loaded: 2, total: none }));
+					expect(combine(withProgress, withProgress)).toEqual(progress({ loaded: 2, total: none }));
+					expect(combine(withProgress, withProgress, withProgress)).toEqual(
+						progress({ loaded: 3, total: none }),
+					);
 				});
 				it('should combine progress without total and progress with total', () => {
 					const withProgress = progress({ loaded: 1, total: none });
 					const withProgressAndTotal = progress({ loaded: 1, total: some(2) });
-					const values = [withProgress, withProgressAndTotal];
-					expect(combine.apply(null, values)).toEqual(progress({ loaded: 2, total: none }));
-					expect(combine.apply(null, values.reverse())).toEqual(progress({ loaded: 2, total: none }));
+					expect(combine(withProgress, withProgressAndTotal)).toEqual(progress({ loaded: 2, total: none }));
+					expect(combine(withProgressAndTotal, withProgress)).toEqual(progress({ loaded: 2, total: none }));
 				});
 				it('should combine progresses with total', () => {
-					const values = [progress({ loaded: 2, total: some(10) }), progress({ loaded: 2, total: some(30) })];
 					const expected = progress({
 						loaded: (2 * 10 + 2 * 30) / (40 * 40),
 						total: some(10 + 30),
 					});
-					expect(combine.apply(null, values)).toEqual(expected);
-					expect(combine.apply(null, values.reverse())).toEqual(expected);
+					expect(
+						combine(progress({ loaded: 2, total: some(10) }), progress({ loaded: 2, total: some(30) })),
+					).toEqual(expected);
+					expect(
+						combine(progress({ loaded: 2, total: some(30) }), progress({ loaded: 2, total: some(10) })),
+					).toEqual(expected);
 				});
 			});
 		});

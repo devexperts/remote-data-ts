@@ -1,3 +1,18 @@
+<a name="0.5.0"></a>
+# [0.5.0](https://github.com/devex-web-frontend/remote-data-ts/compare/v0.4.2...v0.5.0) (2019-01-31)
+
+
+### Features
+
+* major update - Fail fast ap, TS/fp-ts/io-ts upgrade, Traversable2v, Bifunctor ([#28](https://github.com/devex-web-frontend/remote-data-ts/issues/28)) ([3955c17](https://github.com/devex-web-frontend/remote-data-ts/commit/3955c17)), closes [#26](https://github.com/devex-web-frontend/remote-data-ts/issues/26)
+
+
+### BREAKING CHANGES
+
+* new status priority, new dependencies, see #28 for more info
+
+
+
 <a name="0.4.2"></a>
 ## [0.4.2](https://github.com/devex-web-frontend/remote-data-ts/compare/v0.4.1...v0.4.2) (2018-11-20)
 

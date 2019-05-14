@@ -18,7 +18,7 @@
   "license": "MPL-2.0",
   "devDependencies": {
     "@types/jest": "^22.2.0",
-    "conventional-changelog-cli": "^2.0.5",
+    "conventional-changelog-cli": "^2.0.21",
     "dx-lint": "github:devex-web-frontend/dx-lint",
     "jest": "^22.4.2",
     "jest-cli": "^23.6.0",

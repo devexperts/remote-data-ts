@@ -1,20 +1,18 @@
-<a name="0.5.0"></a>
-# [0.5.0](https://github.com/devex-web-frontend/remote-data-ts/compare/v0.4.2...v0.5.0) (2019-01-31)
+# [0.6.0](https://github.com/devex-web-frontend/remote-data-ts/compare/v0.5.0...v0.6.0) (2019-05-26)
+
+
+### Bug Fixes
+
+* incorrect json pending type ([#32](https://github.com/devex-web-frontend/remote-data-ts/issues/32)) ([eba21eb](https://github.com/devex-web-frontend/remote-data-ts/commit/eba21eb)), closes [#31](https://github.com/devex-web-frontend/remote-data-ts/issues/31)
 
 
 ### Features
 
-* major update - Fail fast ap, TS/fp-ts/io-ts upgrade, Traversable2v, Bifunctor ([#28](https://github.com/devex-web-frontend/remote-data-ts/issues/28)) ([3955c17](https://github.com/devex-web-frontend/remote-data-ts/commit/3955c17)), closes [#26](https://github.com/devex-web-frontend/remote-data-ts/issues/26)
-
-
-### BREAKING CHANGES
-
-* new status priority, new dependencies, see #28 for more info
+* Add RemoteDataT transformer ([#29](https://github.com/devex-web-frontend/remote-data-ts/issues/29)) ([9d2d0f2](https://github.com/devex-web-frontend/remote-data-ts/commit/9d2d0f2))
 
 
 
-<a name="0.4.2"></a>
-## [0.4.2](https://github.com/devex-web-frontend/remote-data-ts/compare/v0.4.1...v0.4.2) (2018-11-20)
+# [0.5.0](https://github.com/devex-web-frontend/remote-data-ts/compare/v0.3.1...v0.5.0) (2019-01-31)
 
 
 ### Bug Fixes
@@ -22,34 +20,21 @@
 * move peer dependencies to dependencies ([#24](https://github.com/devex-web-frontend/remote-data-ts/issues/24)) ([0812d29](https://github.com/devex-web-frontend/remote-data-ts/commit/0812d29)), closes [#23](https://github.com/devex-web-frontend/remote-data-ts/issues/23)
 
 
-
-<a name="0.4.1"></a>
-## [0.4.1](https://github.com/devex-web-frontend/remote-data-ts/compare/v0.4.0...v0.4.1) (2018-11-20)
-
-
-### Features
-
-* relax getMonoid dependencies to Semigroup instances instead of Monoid ([#21](https://github.com/devex-web-frontend/remote-data-ts/issues/21)) ([d7b060e](https://github.com/devex-web-frontend/remote-data-ts/commit/d7b060e))
-
-
-
-<a name="0.4.0"></a>
-# [0.4.0](https://github.com/devex-web-frontend/remote-data-ts/compare/v0.3.1...v0.4.0) (2018-11-20)
-
-
 ### Features
 
 * add io-ts type ([#19](https://github.com/devex-web-frontend/remote-data-ts/issues/19)) ([7d6785f](https://github.com/devex-web-frontend/remote-data-ts/commit/7d6785f))
+* major update - Fail fast ap, TS/fp-ts/io-ts upgrade, Traversable2v, Bifunctor ([#28](https://github.com/devex-web-frontend/remote-data-ts/issues/28)) ([3955c17](https://github.com/devex-web-frontend/remote-data-ts/commit/3955c17)), closes [#26](https://github.com/devex-web-frontend/remote-data-ts/issues/26)
 * provide progress parameter via fold pending parameter ([#20](https://github.com/devex-web-frontend/remote-data-ts/issues/20)) ([1cf41ce](https://github.com/devex-web-frontend/remote-data-ts/commit/1cf41ce))
+* relax getMonoid dependencies to Semigroup instances instead of Monoid ([#21](https://github.com/devex-web-frontend/remote-data-ts/issues/21)) ([d7b060e](https://github.com/devex-web-frontend/remote-data-ts/commit/d7b060e))
 
 
 ### BREAKING CHANGES
 
+* new status priority, new dependencies, see #28 for more info
 * add io-ts and io-ts-types to peer-dependencies
 
 
 
-<a name="0.3.1"></a>
 ## [0.3.1](https://github.com/devex-web-frontend/remote-data-ts/compare/v0.3.0...v0.3.1) (2018-10-16)
 
 
@@ -59,7 +44,6 @@
 
 
 
-<a name="0.3.0"></a>
 # [0.3.0](https://github.com/devex-web-frontend/remote-data-ts/compare/0.2.0...v0.3.0) (2018-09-25)
 
 
@@ -71,7 +55,6 @@
 
 
 
-<a name="0.2.0"></a>
 # 0.2.0 (2018-03-20)
 
 

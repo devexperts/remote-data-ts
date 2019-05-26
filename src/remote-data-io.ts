@@ -1,5 +1,4 @@
 import * as t from 'io-ts';
-import { createOptionFromNullable } from 'io-ts-types';
 
 import {
 	failure,
@@ -11,9 +10,9 @@ import {
 	RemotePending,
 	RemoteSuccess,
 	success,
-	RemoteProgress,
 	progress,
 } from './remote-data';
+import { createOptionFromNullable } from 'io-ts-types/lib/fp-ts/createOptionFromNullable';
 
 export interface JSONFailure<L> {
 	type: 'Failure';
@@ -24,9 +23,14 @@ export interface JSONInitial {
 	type: 'Initial';
 }
 
+export interface JSONProgress {
+	loaded: number;
+	total: number | null;
+}
+
 export interface JSONPending {
 	type: 'Pending';
-	progress: RemoteProgress | null;
+	progress: JSONProgress | null;
 }
 
 export interface JSONSuccess<A> {

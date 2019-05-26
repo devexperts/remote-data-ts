@@ -72,7 +72,10 @@ describe('RemoteData', () => {
 			});
 			describe('composition', () => {
 				const double = (a: number): number => a * 2;
-				const quad = compose(double, double);
+				const quad = compose(
+					double,
+					double,
+				);
 				it('initial', () => {
 					expect(initial.map(quad)).toBe(initial.map(double).map(double));
 				});

@@ -6,7 +6,7 @@ import {
 	initial,
 	combine,
 	remoteData,
-	getSetoid,
+	getEq,
 	getOrd,
 	getSemigroup,
 	getMonoid,
@@ -16,10 +16,10 @@ import {
 	progress,
 	fromProgressEvent,
 } from '../remote-data';
-import { identity, compose, Function1 } from 'fp-ts/lib/function';
+import { identity, flow, FunctionN } from 'fp-ts/lib/function';
 import { none, option, some } from 'fp-ts/lib/Option';
 import { array } from 'fp-ts/lib/Array';
-import { setoidNumber, setoidString } from 'fp-ts/lib/Setoid';
+import { eqNumber, eqString } from 'fp-ts/lib/Eq';
 import { ordNumber, ordString } from 'fp-ts/lib/Ord';
 import { semigroupString, semigroupSum } from 'fp-ts/lib/Semigroup';
 import { monoidString, monoidSum } from 'fp-ts/lib/Monoid';
@@ -31,7 +31,7 @@ describe('RemoteData', () => {
 	const pendingRD: RemoteData<string, number> = pending;
 	const successRD: RemoteData<string, number> = success(1);
 	const failureRD: RemoteData<string, number> = failure('foo');
-	const progressRD: RemoteData<string, Function1<number, number>> = progress({ loaded: 1, total: none });
+	const progressRD: RemoteData<string, FunctionN<[number], number>> = progress({ loaded: 1, total: none });
 	describe('Functor', () => {
 		describe('should map over value', () => {
 			it('initial', () => {
@@ -72,7 +72,7 @@ describe('RemoteData', () => {
 			});
 			describe('composition', () => {
 				const double = (a: number): number => a * 2;
-				const quad = compose(
+				const quad = flow(
 					double,
 					double,
 				);
@@ -244,22 +244,22 @@ describe('RemoteData', () => {
 			it('initial', () => {
 				expect(initialRD.reduce(f, 1)).toBe(1);
 				expect(remoteData.foldMap(monoidSum)(initialRD, g)).toBe(0);
-				expect(remoteData.foldr(initialRD, 1, f)).toBe(1);
+				expect(remoteData.reduceRight(initialRD, 1, f)).toBe(1);
 			});
 			it('pending', () => {
 				expect(pendingRD.reduce(f, 1)).toBe(1);
 				expect(remoteData.foldMap(monoidSum)(pendingRD, g)).toBe(0);
-				expect(remoteData.foldr(pendingRD, 1, f)).toBe(1);
+				expect(remoteData.reduceRight(pendingRD, 1, f)).toBe(1);
 			});
 			it('failure', () => {
 				expect(failureRD.reduce(f, 1)).toBe(1);
 				expect(remoteData.foldMap(monoidSum)(failureRD, g)).toBe(0);
-				expect(remoteData.foldr(failureRD, 1, f)).toBe(1);
+				expect(remoteData.reduceRight(failureRD, 1, f)).toBe(1);
 			});
 			it('success', () => {
 				expect(successRD.reduce(f, 1)).toBe(2);
 				expect(remoteData.foldMap(monoidSum)(successRD, g)).toBe(2);
-				expect(remoteData.foldr(successRD, 1, f)).toBe(2);
+				expect(remoteData.reduceRight(successRD, 1, f)).toBe(2);
 			});
 		});
 	});
@@ -294,7 +294,7 @@ describe('RemoteData', () => {
 	});
 	describe('Setoid', () => {
 		describe('getSetoid', () => {
-			const equals = getSetoid(setoidString, setoidNumber).equals;
+			const equals = getEq(eqString, eqNumber).equals;
 			it('initial', () => {
 				expect(equals(initialRD, initialRD)).toBe(true);
 				expect(equals(initialRD, pendingRD)).toBe(false);
@@ -747,7 +747,7 @@ describe('RemoteData', () => {
 				expect(pendingRD.toString()).toBe('pending');
 			});
 			it('failure', () => {
-				expect(failure('foo').toString()).toBe('failure("foo")');
+				expect(failure('foo').toString()).toBe('failure(foo)');
 			});
 			it('success', () => {
 				expect(success(1).toString()).toBe('success(1)');
@@ -755,17 +755,17 @@ describe('RemoteData', () => {
 		});
 		describe('contains', () => {
 			it('initial', () => {
-				expect(initialRD.contains(setoidNumber, 1)).toBe(false);
+				expect(initialRD.contains(eqNumber, 1)).toBe(false);
 			});
 			it('pending', () => {
-				expect(pendingRD.contains(setoidNumber, 1)).toBe(false);
+				expect(pendingRD.contains(eqNumber, 1)).toBe(false);
 			});
 			it('failure', () => {
-				expect(failureRD.contains(setoidNumber, 1)).toBe(false);
+				expect(failureRD.contains(eqNumber, 1)).toBe(false);
 			});
 			it('success', () => {
-				expect(success(2).contains(setoidNumber, 1)).toBe(false);
-				expect(success(1).contains(setoidNumber, 1)).toBe(true);
+				expect(success(2).contains(eqNumber, 1)).toBe(false);
+				expect(success(1).contains(eqNumber, 1)).toBe(true);
 			});
 		});
 		describe('exists', () => {

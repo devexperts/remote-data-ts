@@ -1,4 +1,7 @@
 import * as t from 'io-ts';
+import { fold as foldO } from 'fp-ts/lib/Option';
+import { isLeft } from 'fp-ts/lib/Either';
+import { pipe } from 'fp-ts/lib/pipeable';
 
 import {
 	failure,
@@ -101,17 +104,20 @@ export function createRemoteDataFromJSON<
 			(m instanceof RemoteSuccess && rightType.is(m.value)),
 		(m, c) => {
 			const validation = JSONRemoteData.validate(m, c);
-			if (validation.isLeft()) {
+			if (isLeft(validation)) {
 				return validation as any;
 			} else {
-				const e = validation.value;
+				const e = validation.right;
 				switch (e.type) {
 					case 'Failure':
 						return t.success(failure(e.error));
 					case 'Initial':
 						return t.success(initial);
 					case 'Pending':
-						return e.progress.foldL(() => t.success(pending), p => t.success(progress(p)));
+						return pipe(
+							e.progress,
+							foldO(() => t.success(pending), p => t.success(progress(p))),
+						);
 					case 'Success':
 						return t.success(success(e.value));
 				}

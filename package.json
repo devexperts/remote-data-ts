@@ -27,12 +27,12 @@
     "tslint": "^5.16.0",
     "tslint-config-prettier": "^1.18.0",
     "tslint-plugin-prettier": "^1.3.0",
-    "typescript": "^3.4.5"
+    "typescript": "^3.5.2"
   },
   "dependencies": {
-    "fp-ts": "^1.18.0",
-    "io-ts": "^1.8.6",
-    "io-ts-types": "^0.4.7",
+    "fp-ts": "^2.0.0-rc.8",
+    "io-ts": "^1.10.2",
+    "io-ts-types": "git+https://github.com/gcanti/io-ts-types.git#fp-ts-v2",
     "tslib": "^1.9.3"
   },
   "repository": {

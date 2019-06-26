@@ -12,7 +12,7 @@ describe('RemoteDataT', () => {
 		const x = of(1);
 		const y = remoteDataT.fromRemoteData(task)<string, number>(remoteData.failure('foo'));
 
-		const [e1, e2] = await Promise.all([chain(f, x).run(), chain(f, y).run()]);
+		const [e1, e2] = await Promise.all([chain(f, x)(), chain(f, y)()]);
 
 		expect(e1).toEqual(remoteData.success(2));
 		expect(e2).toEqual(remoteData.failure('foo'));
@@ -22,7 +22,7 @@ describe('RemoteDataT', () => {
 	it('success', async done => {
 		const success = remoteDataT.success(task);
 		const rdTask = success(task.of(42));
-		const rd = await rdTask.run();
+		const rd = await rdTask();
 
 		rd.foldL(fail, fail, fail, (n: number) => expect(n).toEqual(42));
 		done();
@@ -31,7 +31,7 @@ describe('RemoteDataT', () => {
 	it('failure', async done => {
 		const failure = remoteDataT.failure(task);
 		const rdTask = failure(task.of(new Error('oops')));
-		const rd = await rdTask.run();
+		const rd = await rdTask();
 
 		rd.foldL(fail, fail, (e: Error) => expect(e.message).toEqual('oops'), fail);
 		done();
@@ -40,7 +40,7 @@ describe('RemoteDataT', () => {
 	it('fromRemoteData', async done => {
 		const fromRemoteData = remoteDataT.fromRemoteData(task);
 		const rdTask = fromRemoteData(remoteData.success(42));
-		const rd = await rdTask.run();
+		const rd = await rdTask();
 
 		rd.foldL(fail, fail, fail, (n: number) => expect(n).toEqual(42));
 		done();
@@ -78,12 +78,7 @@ describe('RemoteDataT', () => {
 			task.of(remoteData.success('success')),
 		);
 
-		const [i, p, f, s] = await Promise.all([
-			rdTaskInitial.run(),
-			rdTaskPending.run(),
-			rdTaskFailure.run(),
-			rdTaskSuccess.run(),
-		]);
+		const [i, p, f, s] = await Promise.all([rdTaskInitial(), rdTaskPending(), rdTaskFailure(), rdTaskSuccess()]);
 
 		expect(i).toEqual('initial');
 		expect(p).toEqual('pending');
@@ -125,12 +120,7 @@ describe('RemoteDataT', () => {
 			task.of(remoteData.success('success')),
 		);
 
-		const [i, p, f, s] = await Promise.all([
-			rdTaskInitial.run(),
-			rdTaskPending.run(),
-			rdTaskFailure.run(),
-			rdTaskSuccess.run(),
-		]);
+		const [i, p, f, s] = await Promise.all([rdTaskInitial(), rdTaskPending(), rdTaskFailure(), rdTaskSuccess()]);
 
 		expect(i).toEqual('initial');
 		expect(p).toEqual('pending');

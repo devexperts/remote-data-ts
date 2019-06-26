@@ -1,13 +1,13 @@
-import { constFalse, Function2, Function1, Lazy, toString, Predicate, identity } from 'fp-ts/lib/function';
+import { constFalse, FunctionN, Lazy, Predicate, identity } from 'fp-ts/lib/function';
 import { Monad2 } from 'fp-ts/lib/Monad';
-import { Foldable2v2 } from 'fp-ts/lib/Foldable2v';
+import { Foldable2 } from 'fp-ts/lib/Foldable';
 import { Alt2 } from 'fp-ts/lib/Alt';
 import { Extend2 } from 'fp-ts/lib/Extend';
-import { Traversable2v2 } from 'fp-ts/lib/Traversable2v';
+import { Traversable2 } from 'fp-ts/lib/Traversable';
 import { Bifunctor2 } from 'fp-ts/lib/Bifunctor';
-import { isNone, none, Option, some } from 'fp-ts/lib/Option';
-import { Either, left, right, isLeft } from 'fp-ts/lib/Either';
-import { Setoid } from 'fp-ts/lib/Setoid';
+import { isNone, isSome, none, Option, some, fold as foldO } from 'fp-ts/lib/Option';
+import { Either, left, right, fold as foldE } from 'fp-ts/lib/Either';
+import { Eq } from 'fp-ts/lib/Eq';
 
 import { array } from 'fp-ts/lib/Array';
 
@@ -18,13 +18,17 @@ import { Ord } from 'fp-ts/lib/Ord';
 import { sign } from 'fp-ts/lib/Ordering';
 import { Semigroup } from 'fp-ts/lib/Semigroup';
 import { Monoid } from 'fp-ts/lib/Monoid';
-import { Monoidal2 } from 'fp-ts/lib/Monoidal';
+import { pipe } from 'fp-ts/lib/pipeable';
 
 export const URI = 'RemoteData';
 export type URI = typeof URI;
 declare module 'fp-ts/lib/HKT' {
 	interface URI2HKT2<L, A> {
 		RemoteData: RemoteData<L, A>;
+	}
+
+	interface URItoKind2<E, A> {
+		RemoteData: RemoteData<E, A>;
 	}
 }
 
@@ -33,10 +37,10 @@ export type RemoteProgress = {
 	total: Option<number>;
 };
 const concatPendings = <L, A>(a: RemotePending<L, A>, b: RemotePending<L, A>): RemoteData<L, A> => {
-	if (a.progress.isSome() && b.progress.isSome()) {
+	if (isSome(a.progress) && isSome(b.progress)) {
 		const progressA = a.progress.value;
 		const progressB = b.progress.value;
-		if (progressA.total.isNone() || progressB.total.isNone()) {
+		if (isNone(progressA.total) || isNone(progressB.total)) {
 			//tslint:disable no-use-before-declare
 			return progress({
 				loaded: progressA.loaded + progressB.loaded,
@@ -55,8 +59,8 @@ const concatPendings = <L, A>(a: RemotePending<L, A>, b: RemotePending<L, A>): R
 		});
 		//tslint:enable no-use-before-declare
 	}
-	const noA = a.progress.isNone();
-	const noB = b.progress.isNone();
+	const noA = isNone(a.progress);
+	const noB = isNone(b.progress);
 	if (noA && !noB) {
 		return b;
 	}
@@ -116,7 +120,7 @@ export class RemoteInitial<L, A> {
 	 *
 	 * `failure(new Error('err text')).ap(initial) will return failure.`
 	 */
-	ap<B>(fab: RemoteData<L, Function1<A, B>>): RemoteData<L, B> {
+	ap<B>(fab: RemoteData<L, FunctionN<[A], B>>): RemoteData<L, B> {
 		return fab.isFailure() ? ((fab as unknown) as RemoteFailure<L, B>) : initial; //tslint:disable-line no-use-before-declare
 	}
 
@@ -133,7 +137,7 @@ export class RemoteInitial<L, A> {
 	 *
 	 * `initial.chain(x => success(x)) will return initial`
 	 */
-	chain<B>(f: Function1<A, RemoteData<L, B>>): RemoteData<L, B> {
+	chain<B>(f: FunctionN<[A], RemoteData<L, B>>): RemoteData<L, B> {
 		return initial; //tslint:disable-line no-use-before-declare
 	}
 
@@ -145,7 +149,7 @@ export class RemoteInitial<L, A> {
 	 * Takes a function `f` and returns a result of applying it to `RemoteData`.
 	 * It's a bit like a `chain`, but `f` should takes `RemoteData<T>` instead of returns it, and it should return T instead of takes it.
 	 */
-	extend<B>(f: Function1<RemoteData<L, A>, B>): RemoteData<L, B> {
+	extend<B>(f: FunctionN<[RemoteData<L, A>], B>): RemoteData<L, B> {
 		return initial; //tslint:disable-line no-use-before-declare
 	}
 
@@ -168,7 +172,7 @@ export class RemoteInitial<L, A> {
 	 *
 	 * `success(21).fold(foldInitial, foldPending, foldFailure, foldSuccess) will return 22`
 	 */
-	fold<B>(onInitial: B, onPending: B, onFailure: Function1<L, B>, onSuccess: Function1<A, B>): B {
+	fold<B>(onInitial: B, onPending: B, onFailure: FunctionN<[L], B>, onSuccess: FunctionN<[A], B>): B {
 		return onInitial;
 	}
 
@@ -184,9 +188,9 @@ export class RemoteInitial<L, A> {
 	 */
 	foldL<B>(
 		onInitial: Lazy<B>,
-		onPending: Function1<Option<RemoteProgress>, B>,
-		onFailure: Function1<L, B>,
-		onSuccess: Function1<A, B>,
+		onPending: FunctionN<[Option<RemoteProgress>], B>,
+		onFailure: FunctionN<[L], B>,
+		onSuccess: FunctionN<[A], B>,
 	): B {
 		return onInitial();
 	}
@@ -219,7 +223,7 @@ export class RemoteInitial<L, A> {
 	 *
 	 * `failure(new Error('error text')).map(x => x + 99) will return failure(new Error('error text')`
 	 */
-	map<B>(f: Function1<A, B>): RemoteData<L, B> {
+	map<B>(f: FunctionN<[A], B>): RemoteData<L, B> {
 		return initial; //tslint:disable-line no-use-before-declare
 	}
 
@@ -234,7 +238,7 @@ export class RemoteInitial<L, A> {
 	 *
 	 * `failure(new Error('error text')).map(x => 'new error text') will return failure(new Error('new error text'))`
 	 */
-	mapLeft<M>(f: Function1<L, M>): RemoteData<M, A> {
+	mapLeft<M>(f: FunctionN<[L], M>): RemoteData<M, A> {
 		return initial; //tslint:disable-line no-use-before-declare
 	}
 
@@ -256,7 +260,7 @@ export class RemoteInitial<L, A> {
 		return value;
 	}
 
-	reduce<B>(f: Function2<B, A, B>, b: B): B {
+	reduce<B>(f: FunctionN<[B, A], B>, b: B): B {
 		return b;
 	}
 
@@ -383,12 +387,12 @@ export class RemoteInitial<L, A> {
 	/**
 	 * Compare values and returns `true` if they are identical, otherwise returns `false`.
 	 * "Left" part will return `false`.
-	 * `RemoteSuccess` will call `Setoid`'s `equals` method.
+	 * `RemoteSuccess` will call `Eq`'s `equals` method.
 	 *
-	 * If you want to compare `RemoteData`'s values better use `getSetoid` or `getOrd` helpers.
+	 * If you want to compare `RemoteData`'s values better use `getEq` or `getOrd` helpers.
 	 *
 	 */
-	contains(S: Setoid<A>, a: A): boolean {
+	contains(S: Eq<A>, a: A): boolean {
 		return false;
 	}
 
@@ -435,12 +439,12 @@ export class RemoteFailure<L, A> {
 		return fy();
 	}
 
-	ap<B>(fab: RemoteData<L, Function1<A, B>>): RemoteData<L, B> {
+	ap<B>(fab: RemoteData<L, FunctionN<[A], B>>): RemoteData<L, B> {
 		//tslint:disable-next-line no-use-before-declare
 		return fab.isFailure() ? ((fab as unknown) as RemoteFailure<L, B>) : ((this as unknown) as RemoteFailure<L, B>);
 	}
 
-	chain<B>(f: Function1<A, RemoteData<L, B>>): RemoteData<L, B> {
+	chain<B>(f: FunctionN<[A], RemoteData<L, B>>): RemoteData<L, B> {
 		return (this as unknown) as RemoteFailure<L, B>;
 	}
 
@@ -448,19 +452,19 @@ export class RemoteFailure<L, A> {
 		return failure(f(this.error)); //tslint:disable-line no-use-before-declare
 	}
 
-	extend<B>(f: Function1<RemoteData<L, A>, B>): RemoteData<L, B> {
+	extend<B>(f: FunctionN<[RemoteData<L, A>], B>): RemoteData<L, B> {
 		return (this as unknown) as RemoteFailure<L, B>;
 	}
 
-	fold<B>(onInitial: B, onPending: B, onFailure: Function1<L, B>, onSuccess: Function1<A, B>): B {
+	fold<B>(onInitial: B, onPending: B, onFailure: FunctionN<[L], B>, onSuccess: FunctionN<[A], B>): B {
 		return onFailure(this.error);
 	}
 
 	foldL<B>(
 		onInitial: Lazy<B>,
-		onPending: Function1<Option<RemoteProgress>, B>,
-		onFailure: Function1<L, B>,
-		onSuccess: Function1<A, B>,
+		onPending: FunctionN<[Option<RemoteProgress>], B>,
+		onFailure: FunctionN<[L], B>,
+		onSuccess: FunctionN<[A], B>,
 	): B {
 		return onFailure(this.error);
 	}
@@ -473,7 +477,7 @@ export class RemoteFailure<L, A> {
 		return (this as unknown) as RemoteFailure<L, B>;
 	}
 
-	mapLeft<M>(f: Function1<L, M>): RemoteData<M, A> {
+	mapLeft<M>(f: FunctionN<[L], M>): RemoteData<M, A> {
 		return failure(f(this.error)); //tslint:disable-line no-use-before-declare
 	}
 
@@ -481,7 +485,7 @@ export class RemoteFailure<L, A> {
 		return value;
 	}
 
-	reduce<B>(f: Function2<B, A, B>, b: B): B {
+	reduce<B>(f: FunctionN<[B, A], B>, b: B): B {
 		return b;
 	}
 
@@ -518,10 +522,10 @@ export class RemoteFailure<L, A> {
 	}
 
 	toString(): string {
-		return `failure(${toString(this.error)})`;
+		return `failure(${String(this.error)})`;
 	}
 
-	contains(S: Setoid<A>, a: A): boolean {
+	contains(S: Eq<A>, a: A): boolean {
 		return false;
 	}
 
@@ -534,9 +538,12 @@ export class RemoteFailure<L, A> {
 	}
 
 	recoverMap<B>(f: (error: L) => Option<B>, g: (value: A) => B): RemoteData<L, B> {
-		return f(this.error).fold(
-			(this as unknown) as RemoteData<L, B>,
-			(success as unknown) as (a: B) => RemoteData<L, B>, //tslint:disable-line no-use-before-declare
+		return pipe(
+			f(this.error),
+			foldO(
+				() => (this as unknown) as RemoteData<L, B>,
+				(success as unknown) as (a: B) => RemoteData<L, B>, //tslint:disable-line no-use-before-declare
+			),
 		);
 	}
 }
@@ -560,7 +567,7 @@ export class RemoteSuccess<L, A> {
 		return this;
 	}
 
-	ap<B>(fab: RemoteData<L, Function1<A, B>>): RemoteData<L, B> {
+	ap<B>(fab: RemoteData<L, FunctionN<[A], B>>): RemoteData<L, B> {
 		return fab.fold(
 			initial, //tslint:disable-line no-use-before-declare
 			(fab as unknown) as RemoteData<L, B>,
@@ -569,7 +576,7 @@ export class RemoteSuccess<L, A> {
 		);
 	}
 
-	chain<B>(f: Function1<A, RemoteData<L, B>>): RemoteData<L, B> {
+	chain<B>(f: FunctionN<[A], RemoteData<L, B>>): RemoteData<L, B> {
 		return f(this.value);
 	}
 
@@ -577,19 +584,19 @@ export class RemoteSuccess<L, A> {
 		return success(g(this.value)); //tslint:disable-line no-use-before-declare
 	}
 
-	extend<B>(f: Function1<RemoteData<L, A>, B>): RemoteData<L, B> {
+	extend<B>(f: FunctionN<[RemoteData<L, A>], B>): RemoteData<L, B> {
 		return of(f(this)); //tslint:disable-line no-use-before-declare
 	}
 
-	fold<B>(onInitial: B, onPending: B, onFailure: Function1<L, B>, onSuccess: Function1<A, B>): B {
+	fold<B>(onInitial: B, onPending: B, onFailure: FunctionN<[L], B>, onSuccess: FunctionN<[A], B>): B {
 		return onSuccess(this.value);
 	}
 
 	foldL<B>(
 		onInitial: Lazy<B>,
-		onPending: Function1<Option<RemoteProgress>, B>,
-		onFailure: Function1<L, B>,
-		onSuccess: Function1<A, B>,
+		onPending: FunctionN<[Option<RemoteProgress>], B>,
+		onFailure: FunctionN<[L], B>,
+		onSuccess: FunctionN<[A], B>,
 	): B {
 		return onSuccess(this.value);
 	}
@@ -598,11 +605,11 @@ export class RemoteSuccess<L, A> {
 		return this.value;
 	}
 
-	map<B>(f: Function1<A, B>): RemoteData<L, B> {
+	map<B>(f: FunctionN<[A], B>): RemoteData<L, B> {
 		return of(f(this.value)); //tslint:disable-line no-use-before-declare
 	}
 
-	mapLeft<M>(f: Function1<L, M>): RemoteData<M, A> {
+	mapLeft<M>(f: FunctionN<[L], M>): RemoteData<M, A> {
 		return (this as unknown) as RemoteSuccess<M, A>;
 	}
 
@@ -610,7 +617,7 @@ export class RemoteSuccess<L, A> {
 		return this.value;
 	}
 
-	reduce<B>(f: Function2<B, A, B>, b: B): B {
+	reduce<B>(f: FunctionN<[B, A], B>, b: B): B {
 		return f(b, this.value);
 	}
 
@@ -647,10 +654,10 @@ export class RemoteSuccess<L, A> {
 	}
 
 	toString(): string {
-		return `success(${toString(this.value)})`;
+		return `success(${String(this.value)})`;
 	}
 
-	contains(S: Setoid<A>, a: A): boolean {
+	contains(S: Eq<A>, a: A): boolean {
 		return S.equals(this.value, a);
 	}
 
@@ -686,7 +693,7 @@ export class RemotePending<L, A> {
 		return fy();
 	}
 
-	ap<B>(fab: RemoteData<L, Function1<A, B>>): RemoteData<L, B> {
+	ap<B>(fab: RemoteData<L, FunctionN<[A], B>>): RemoteData<L, B> {
 		return fab.fold(
 			initial, //tslint:disable-line no-use-before-declare
 			fab.isPending()
@@ -697,7 +704,7 @@ export class RemotePending<L, A> {
 		);
 	}
 
-	chain<B>(f: Function1<A, RemoteData<L, B>>): RemoteData<L, B> {
+	chain<B>(f: FunctionN<[A], RemoteData<L, B>>): RemoteData<L, B> {
 		return pending; //tslint:disable-line no-use-before-declare
 	}
 
@@ -705,19 +712,19 @@ export class RemotePending<L, A> {
 		return pending; //tslint:disable-line no-use-before-declare
 	}
 
-	extend<B>(f: Function1<RemoteData<L, A>, B>): RemoteData<L, B> {
+	extend<B>(f: FunctionN<[RemoteData<L, A>], B>): RemoteData<L, B> {
 		return pending; //tslint:disable-line no-use-before-declare
 	}
 
-	fold<B>(onInitial: B, onPending: B, onFailure: Function1<L, B>, onSuccess: Function1<A, B>): B {
+	fold<B>(onInitial: B, onPending: B, onFailure: FunctionN<[L], B>, onSuccess: FunctionN<[A], B>): B {
 		return onPending;
 	}
 
 	foldL<B>(
 		onInitial: Lazy<B>,
-		onPending: Function1<Option<RemoteProgress>, B>,
-		onFailure: Function1<L, B>,
-		onSuccess: Function1<A, B>,
+		onPending: FunctionN<[Option<RemoteProgress>], B>,
+		onFailure: FunctionN<[L], B>,
+		onSuccess: FunctionN<[A], B>,
 	): B {
 		return onPending(this.progress);
 	}
@@ -726,11 +733,11 @@ export class RemotePending<L, A> {
 		return f();
 	}
 
-	map<B>(f: Function1<A, B>): RemoteData<L, B> {
+	map<B>(f: FunctionN<[A], B>): RemoteData<L, B> {
 		return (this as unknown) as RemotePending<L, B>;
 	}
 
-	mapLeft<M>(f: Function1<L, M>): RemoteData<M, A> {
+	mapLeft<M>(f: FunctionN<[L], M>): RemoteData<M, A> {
 		return pending; //tslint:disable-line no-use-before-declare
 	}
 
@@ -738,7 +745,7 @@ export class RemotePending<L, A> {
 		return value;
 	}
 
-	reduce<B>(f: Function2<B, A, B>, b: B): B {
+	reduce<B>(f: FunctionN<[B, A], B>, b: B): B {
 		return b;
 	}
 
@@ -778,7 +785,7 @@ export class RemotePending<L, A> {
 		return 'pending';
 	}
 
-	contains(S: Setoid<A>, a: A): boolean {
+	contains(S: Eq<A>, a: A): boolean {
 		return false;
 	}
 
@@ -811,15 +818,16 @@ export type RemoteData<L, A> = RemoteInitial<L, A> | RemoteFailure<L, A> | Remot
 
 //Monad
 const of = <L, A>(value: A): RemoteSuccess<L, A> => new RemoteSuccess(value);
-const ap = <L, A, B>(fab: RemoteData<L, Function1<A, B>>, fa: RemoteData<L, A>): RemoteData<L, B> => fa.ap(fab);
-const map = <L, A, B>(fa: RemoteData<L, A>, f: Function1<A, B>): RemoteData<L, B> => fa.map(f);
-const chain = <L, A, B>(fa: RemoteData<L, A>, f: Function1<A, RemoteData<L, B>>): RemoteData<L, B> => fa.chain(f);
+const ap = <L, A, B>(fab: RemoteData<L, FunctionN<[A], B>>, fa: RemoteData<L, A>): RemoteData<L, B> => fa.ap(fab);
+const map = <L, A, B>(fa: RemoteData<L, A>, f: FunctionN<[A], B>): RemoteData<L, B> => fa.map(f);
+const chain = <L, A, B>(fa: RemoteData<L, A>, f: FunctionN<[A], RemoteData<L, B>>): RemoteData<L, B> => fa.chain(f);
 
 //Foldable2v
-const reduce = <L, A, B>(fa: RemoteData<L, A>, b: B, f: Function2<B, A, B>): B => fa.reduce(f, b);
+const reduce = <L, A, B>(fa: RemoteData<L, A>, b: B, f: FunctionN<[B, A], B>): B => fa.reduce(f, b);
 const foldMap = <M>(M: Monoid<M>) => <L, A>(fa: RemoteData<L, A>, f: (a: A) => M): M =>
 	fa.isSuccess() ? f(fa.value) : M.empty;
-const foldr = <L, A, B>(fa: RemoteData<L, A>, b: B, f: (a: A, b: B) => B): B => (fa.isSuccess() ? f(fa.value, b) : b);
+const reduceRight = <L, A, B>(fa: RemoteData<L, A>, b: B, f: (a: A, b: B) => B): B =>
+	fa.isSuccess() ? f(fa.value, b) : b;
 
 //Traversable2v
 const traverse = <F>(F: Applicative<F>) => <L, A, B>(
@@ -839,12 +847,13 @@ const sequence = <F>(F: Applicative<F>) => <L, A>(ta: RemoteData<L, HKT<F, A>>):
 const bimap = <L, V, A, B>(fla: RemoteData<L, A>, f: (u: L) => V, g: (a: A) => B): RemoteData<V, B> => {
 	return fla.bimap(f, g);
 };
+const mapLeft = <L, V, A>(fla: RemoteData<L, A>, f: (u: L) => V): RemoteData<V, A> => fla.mapLeft(f);
 
 //Alt
-const alt = <L, A>(fx: RemoteData<L, A>, fy: RemoteData<L, A>): RemoteData<L, A> => fx.alt(fy);
+const alt = <L, A>(fx: RemoteData<L, A>, fy: () => RemoteData<L, A>): RemoteData<L, A> => fx.alt(fy());
 
 //Extend
-const extend = <L, A, B>(fla: RemoteData<L, A>, f: Function1<RemoteData<L, A>, B>): RemoteData<L, B> => fla.extend(f);
+const extend = <L, A, B>(fla: RemoteData<L, A>, f: FunctionN<[RemoteData<L, A>], B>): RemoteData<L, B> => fla.extend(f);
 
 //constructors
 export const failure = <L, A>(error: L): RemoteData<L, A> => new RemoteFailure(error);
@@ -862,12 +871,8 @@ export const isSuccess = <L, A>(data: RemoteData<L, A>): data is RemoteSuccess<L
 export const isPending = <L, A>(data: RemoteData<L, A>): data is RemotePending<L, A> => data.isPending();
 export const isInitial = <L, A>(data: RemoteData<L, A>): data is RemoteInitial<L, A> => data.isInitial();
 
-//Monoidal
-const unit = <L, A>(): RemoteData<L, A> => initial;
-const mult = <L, A, B>(fa: RemoteData<L, A>, fb: RemoteData<L, B>): RemoteData<L, [A, B]> => combine(fa, fb);
-
-//Setoid
-export const getSetoid = <L, A>(SL: Setoid<L>, SA: Setoid<A>): Setoid<RemoteData<L, A>> => {
+//Eq
+export const getEq = <L, A>(SL: Eq<L>, SA: Eq<A>): Eq<RemoteData<L, A>> => {
 	return {
 		equals: (x, y) =>
 			x.foldL(
@@ -882,7 +887,7 @@ export const getSetoid = <L, A>(SL: Setoid<L>, SA: Setoid<A>): Setoid<RemoteData
 //Ord
 export const getOrd = <L, A>(OL: Ord<L>, OA: Ord<A>): Ord<RemoteData<L, A>> => {
 	return {
-		...getSetoid(OL, OA),
+		...getEq(OL, OA),
 		compare: (x, y) =>
 			sign(
 				x.foldL(
@@ -933,17 +938,16 @@ export function fromOption<L, A>(option: Option<A>, error: Lazy<L>): RemoteData<
 }
 
 export function fromEither<L, A>(either: Either<L, A>): RemoteData<L, A> {
-	if (isLeft(either)) {
-		return failure(either.value);
-	} else {
-		return success(either.value);
-	}
+	return pipe(
+		either,
+		foldE(l => failure(l), r => success(r)),
+	);
 }
 
 export function fromPredicate<L, A>(
 	predicate: Predicate<A>,
-	whenFalse: Function1<A, L>,
-): Function1<A, RemoteData<L, A>> {
+	whenFalse: FunctionN<[A], L>,
+): FunctionN<[A], RemoteData<L, A>> {
 	return a => (predicate(a) ? success(a) : failure(whenFalse(a)));
 }
 
@@ -956,13 +960,12 @@ export function fromProgressEvent<L, A>(event: ProgressEvent): RemoteData<L, A> 
 
 //instance
 export const remoteData: Monad2<URI> &
-	Foldable2v2<URI> &
-	Traversable2v2<URI> &
+	Foldable2<URI> &
+	Traversable2<URI> &
 	Bifunctor2<URI> &
 	Alt2<URI> &
 	Extend2<URI> &
-	Alternative2<URI> &
-	Monoidal2<URI> = {
+	Alternative2<URI> = {
 	//HKT
 	URI,
 
@@ -974,8 +977,8 @@ export const remoteData: Monad2<URI> &
 
 	//Foldable2v
 	reduce,
+	reduceRight,
 	foldMap,
-	foldr,
 
 	//Traversable2v
 	traverse,
@@ -983,6 +986,7 @@ export const remoteData: Monad2<URI> &
 
 	//Bifunctor
 	bimap,
+	mapLeft,
 
 	//Alt
 	alt,
@@ -992,10 +996,6 @@ export const remoteData: Monad2<URI> &
 
 	//Extend
 	extend,
-
-	//Monoidal
-	unit,
-	mult,
 };
 
 export function combine<A, L>(a: RemoteData<L, A>): RemoteData<L, [A]>;

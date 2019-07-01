@@ -23,10 +23,6 @@ import { pipe } from 'fp-ts/lib/pipeable';
 export const URI = 'RemoteData';
 export type URI = typeof URI;
 declare module 'fp-ts/lib/HKT' {
-	interface URI2HKT2<L, A> {
-		RemoteData: RemoteData<L, A>;
-	}
-
 	interface URItoKind2<E, A> {
 		RemoteData: RemoteData<E, A>;
 	}
@@ -829,7 +825,7 @@ const foldMap = <M>(M: Monoid<M>) => <L, A>(fa: RemoteData<L, A>, f: (a: A) => M
 const reduceRight = <L, A, B>(fa: RemoteData<L, A>, b: B, f: (a: A, b: B) => B): B =>
 	fa.isSuccess() ? f(fa.value, b) : b;
 
-//Traversable2v
+//Traversable
 const traverse = <F>(F: Applicative<F>) => <L, A, B>(
 	ta: RemoteData<L, A>,
 	f: (a: A) => HKT<F, B>,
@@ -975,12 +971,12 @@ export const remoteData: Monad2<URI> &
 	map,
 	chain,
 
-	//Foldable2v
+	//Foldable
 	reduce,
 	reduceRight,
 	foldMap,
 
-	//Traversable2v
+	//Traversable
 	traverse,
 	sequence,
 

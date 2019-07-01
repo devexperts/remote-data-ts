@@ -818,7 +818,7 @@ const ap = <L, A, B>(fab: RemoteData<L, FunctionN<[A], B>>, fa: RemoteData<L, A>
 const map = <L, A, B>(fa: RemoteData<L, A>, f: FunctionN<[A], B>): RemoteData<L, B> => fa.map(f);
 const chain = <L, A, B>(fa: RemoteData<L, A>, f: FunctionN<[A], RemoteData<L, B>>): RemoteData<L, B> => fa.chain(f);
 
-//Foldable2v
+//Foldable
 const reduce = <L, A, B>(fa: RemoteData<L, A>, b: B, f: FunctionN<[B, A], B>): B => fa.reduce(f, b);
 const foldMap = <M>(M: Monoid<M>) => <L, A>(fa: RemoteData<L, A>, f: (a: A) => M): M =>
 	fa.isSuccess() ? f(fa.value) : M.empty;

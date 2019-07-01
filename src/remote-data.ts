@@ -18,7 +18,7 @@ import { Ord } from 'fp-ts/lib/Ord';
 import { sign } from 'fp-ts/lib/Ordering';
 import { Semigroup } from 'fp-ts/lib/Semigroup';
 import { Monoid } from 'fp-ts/lib/Monoid';
-import { pipe } from 'fp-ts/lib/pipeable';
+import { pipe, pipeable } from 'fp-ts/lib/pipeable';
 
 export const URI = 'RemoteData';
 export type URI = typeof URI;
@@ -581,7 +581,7 @@ export class RemoteSuccess<L, A> {
 	}
 
 	extend<B>(f: FunctionN<[RemoteData<L, A>], B>): RemoteData<L, B> {
-		return of(f(this)); //tslint:disable-line no-use-before-declare
+		return remoteData.of(f(this)); //tslint:disable-line no-use-before-declare
 	}
 
 	fold<B>(onInitial: B, onPending: B, onFailure: FunctionN<[L], B>, onSuccess: FunctionN<[A], B>): B {
@@ -602,7 +602,7 @@ export class RemoteSuccess<L, A> {
 	}
 
 	map<B>(f: FunctionN<[A], B>): RemoteData<L, B> {
-		return of(f(this.value)); //tslint:disable-line no-use-before-declare
+		return remoteData.of(f(this.value)); //tslint:disable-line no-use-before-declare
 	}
 
 	mapLeft<M>(f: FunctionN<[L], M>): RemoteData<M, A> {
@@ -812,60 +812,38 @@ export class RemotePending<L, A> {
  */
 export type RemoteData<L, A> = RemoteInitial<L, A> | RemoteFailure<L, A> | RemoteSuccess<L, A> | RemotePending<L, A>;
 
-//Monad
-const of = <L, A>(value: A): RemoteSuccess<L, A> => new RemoteSuccess(value);
-const ap = <L, A, B>(fab: RemoteData<L, FunctionN<[A], B>>, fa: RemoteData<L, A>): RemoteData<L, B> => fa.ap(fab);
-const map = <L, A, B>(fa: RemoteData<L, A>, f: FunctionN<[A], B>): RemoteData<L, B> => fa.map(f);
-const chain = <L, A, B>(fa: RemoteData<L, A>, f: FunctionN<[A], RemoteData<L, B>>): RemoteData<L, B> => fa.chain(f);
-
-//Foldable
-const reduce = <L, A, B>(fa: RemoteData<L, A>, b: B, f: FunctionN<[B, A], B>): B => fa.reduce(f, b);
-const foldMap = <M>(M: Monoid<M>) => <L, A>(fa: RemoteData<L, A>, f: (a: A) => M): M =>
-	fa.isSuccess() ? f(fa.value) : M.empty;
-const reduceRight = <L, A, B>(fa: RemoteData<L, A>, b: B, f: (a: A, b: B) => B): B =>
-	fa.isSuccess() ? f(fa.value, b) : b;
-
-//Traversable
-const traverse = <F>(F: Applicative<F>) => <L, A, B>(
-	ta: RemoteData<L, A>,
-	f: (a: A) => HKT<F, B>,
-): HKT<F, RemoteData<L, B>> => {
-	if (ta.isSuccess()) {
-		return F.map<B, RemoteData<L, B>>(f(ta.value), of);
-	} else {
-		return F.of((ta as unknown) as RemoteFailure<L, B> | RemoteInitial<L, B> | RemotePending<L, B>);
-	}
-};
-const sequence = <F>(F: Applicative<F>) => <L, A>(ta: RemoteData<L, HKT<F, A>>): HKT<F, RemoteData<L, A>> =>
-	traverse(F)(ta, identity);
-
-//Bifunctor
-const bimap = <L, V, A, B>(fla: RemoteData<L, A>, f: (u: L) => V, g: (a: A) => B): RemoteData<V, B> => {
-	return fla.bimap(f, g);
-};
-const mapLeft = <L, V, A>(fla: RemoteData<L, A>, f: (u: L) => V): RemoteData<V, A> => fla.mapLeft(f);
-
-//Alt
-const alt = <L, A>(fx: RemoteData<L, A>, fy: () => RemoteData<L, A>): RemoteData<L, A> => fx.alt(fy());
-
-//Extend
-const extend = <L, A, B>(fla: RemoteData<L, A>, f: FunctionN<[RemoteData<L, A>], B>): RemoteData<L, B> => fla.extend(f);
-
 //constructors
 export const failure = <L, A>(error: L): RemoteData<L, A> => new RemoteFailure(error);
-export const success: <L, A>(value: A) => RemoteData<L, A> = of;
+export const success = <L, A>(value: A): RemoteData<L, A> => new RemoteSuccess(value);
 export const pending: RemoteData<never, never> = new RemotePending<never, never>();
 export const progress = <L, A>(progress: RemoteProgress): RemoteData<L, A> => new RemotePending(some(progress));
 export const initial: RemoteData<never, never> = new RemoteInitial<never, never>();
-
-//Alternative
-const zero = <L, A>(): RemoteData<L, A> => initial;
 
 //filters
 export const isFailure = <L, A>(data: RemoteData<L, A>): data is RemoteFailure<L, A> => data.isFailure();
 export const isSuccess = <L, A>(data: RemoteData<L, A>): data is RemoteSuccess<L, A> => data.isSuccess();
 export const isPending = <L, A>(data: RemoteData<L, A>): data is RemotePending<L, A> => data.isPending();
 export const isInitial = <L, A>(data: RemoteData<L, A>): data is RemoteInitial<L, A> => data.isInitial();
+
+export const getOrElse = <L, A>(f: Lazy<A>) => (ma: RemoteData<L, A>): A => (isSuccess(ma) ? ma.value : f());
+
+export const fold = <L, A, B>(
+	onInitial: Lazy<B>,
+	onPending: FunctionN<[Option<RemoteProgress>], B>,
+	onFailure: FunctionN<[L], B>,
+	onSuccess: FunctionN<[A], B>,
+) => (ma: RemoteData<L, A>): B =>
+	isInitial(ma)
+		? onInitial()
+		: isPending(ma)
+		? onPending(ma.progress)
+		: isFailure(ma)
+		? onFailure(ma.error)
+		: onSuccess(ma.value);
+
+export const toNullable = <L, A>(ma: RemoteData<L, A>): A | null => (isSuccess(ma) ? ma.value : null);
+
+export const toUndefined = <L, A>(ma: RemoteData<L, A>): A | undefined => (isSuccess(ma) ? ma.value : undefined);
 
 //Eq
 export const getEq = <L, A>(SL: Eq<L>, SA: Eq<A>): Eq<RemoteData<L, A>> => {
@@ -966,32 +944,80 @@ export const remoteData: Monad2<URI> &
 	URI,
 
 	//Monad
-	of,
-	ap,
-	map,
-	chain,
+	of: <L, A>(value: A): RemoteSuccess<L, A> => new RemoteSuccess(value),
+	ap: <L, A, B>(fab: RemoteData<L, FunctionN<[A], B>>, fa: RemoteData<L, A>): RemoteData<L, B> => fa.ap(fab),
+	map: <L, A, B>(fa: RemoteData<L, A>, f: FunctionN<[A], B>): RemoteData<L, B> => fa.map(f),
+	chain: <L, A, B>(fa: RemoteData<L, A>, f: FunctionN<[A], RemoteData<L, B>>): RemoteData<L, B> => fa.chain(f),
 
 	//Foldable
-	reduce,
-	reduceRight,
-	foldMap,
+	reduce: <L, A, B>(fa: RemoteData<L, A>, b: B, f: FunctionN<[B, A], B>): B => fa.reduce(f, b),
+	reduceRight: <L, A, B>(fa: RemoteData<L, A>, b: B, f: (a: A, b: B) => B): B =>
+		fa.isSuccess() ? f(fa.value, b) : b,
+	foldMap: <M>(M: Monoid<M>) => <L, A>(fa: RemoteData<L, A>, f: (a: A) => M): M =>
+		fa.isSuccess() ? f(fa.value) : M.empty,
 
 	//Traversable
-	traverse,
-	sequence,
+	traverse: <F>(F: Applicative<F>) => <L, A, B>(
+		ta: RemoteData<L, A>,
+		f: (a: A) => HKT<F, B>,
+	): HKT<F, RemoteData<L, B>> => {
+		if (ta.isSuccess()) {
+			return F.map<B, RemoteData<L, B>>(f(ta.value), remoteData.of);
+		} else {
+			return F.of((ta as unknown) as RemoteFailure<L, B> | RemoteInitial<L, B> | RemotePending<L, B>);
+		}
+	},
+	sequence: <F>(F: Applicative<F>) => <L, A>(ta: RemoteData<L, HKT<F, A>>): HKT<F, RemoteData<L, A>> =>
+		remoteData.traverse(F)(ta, identity),
 
 	//Bifunctor
-	bimap,
-	mapLeft,
+	bimap: <L, V, A, B>(fla: RemoteData<L, A>, f: (u: L) => V, g: (a: A) => B): RemoteData<V, B> => fla.bimap(f, g),
+	mapLeft: <L, V, A>(fla: RemoteData<L, A>, f: (u: L) => V): RemoteData<V, A> => fla.mapLeft(f),
 
 	//Alt
-	alt,
+	alt: <L, A>(fx: RemoteData<L, A>, fy: () => RemoteData<L, A>): RemoteData<L, A> => fx.alt(fy()),
 
 	//Alternative
-	zero,
+	zero: <L, A>(): RemoteData<L, A> => initial,
 
 	//Extend
+	extend: <L, A, B>(fla: RemoteData<L, A>, f: FunctionN<[RemoteData<L, A>], B>): RemoteData<L, B> => fla.extend(f),
+};
+
+const {
+	alt,
+	ap,
+	apFirst,
+	apSecond,
+	bimap,
+	chain,
+	chainFirst,
+	duplicate,
 	extend,
+	flatten,
+	foldMap,
+	map,
+	mapLeft,
+	reduce,
+	reduceRight,
+} = pipeable(remoteData);
+
+export {
+	alt,
+	ap,
+	apFirst,
+	apSecond,
+	bimap,
+	chain,
+	chainFirst,
+	duplicate,
+	extend,
+	flatten,
+	foldMap,
+	map,
+	mapLeft,
+	reduce,
+	reduceRight,
 };
 
 export function combine<A, L>(a: RemoteData<L, A>): RemoteData<L, [A]>;
@@ -1024,7 +1050,7 @@ export function combine<A, B, C, D, E, F, L>(
 ): RemoteData<L, [A, B, C, D, E, F]>;
 export function combine<T, L>(...list: RemoteData<L, T>[]): RemoteData<L, T[]> {
 	if (list.length === 0) {
-		return of([]);
+		return remoteData.of([]);
 	}
 	return array.sequence(remoteData)(list);
 }

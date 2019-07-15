@@ -15,7 +15,7 @@ import {
 	success,
 	progress,
 } from './remote-data';
-import { createOptionFromNullable } from 'io-ts-types/lib/fp-ts/createOptionFromNullable';
+import { optionFromNullable } from 'io-ts-types/lib/optionFromNullable';
 
 export interface JSONFailure<L> {
 	type: 'Failure';
@@ -73,10 +73,10 @@ export function createRemoteDataFromJSON<
 	rightType: R,
 	name: string = `RemoteData<${leftType.name}, ${rightType.name}>`,
 ): RemoteDataFromJSONType<L, R, RemoteData<AL, AR>, JSONRemoteData<OL, OR>, t.mixed> {
-	const JSONProgress = createOptionFromNullable(
+	const JSONProgress = optionFromNullable(
 		t.type({
 			loaded: t.number,
-			total: createOptionFromNullable(t.number),
+			total: optionFromNullable(t.number),
 		}),
 	);
 	const JSONFailure = t.type({

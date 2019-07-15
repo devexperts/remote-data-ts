@@ -30,9 +30,9 @@
     "typescript": "^3.5.2"
   },
   "dependencies": {
-    "fp-ts": "^2.0.0-rc.8",
-    "io-ts": "^1.10.2",
-    "io-ts-types": "git+https://github.com/gcanti/io-ts-types.git#fp-ts-v2",
+    "fp-ts": "^2.0.0",
+    "io-ts": "^2.0.0",
+    "io-ts-types": "^0.5.0",
     "tslib": "^1.9.3"
   },
   "repository": {

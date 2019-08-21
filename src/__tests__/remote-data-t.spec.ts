@@ -3,6 +3,8 @@ import { identity, constant } from 'fp-ts/lib/function';
 
 import * as remoteDataT from '../remote-data-t';
 import * as remoteData from '../remote-data';
+import { pipe } from 'fp-ts/lib/pipeable';
+import { fold } from '../remote-data';
 
 describe('RemoteDataT', () => {
 	it('chain', async done => {
@@ -24,7 +26,10 @@ describe('RemoteDataT', () => {
 		const rdTask = success(task.of(42));
 		const rd = await rdTask();
 
-		rd.foldL(fail, fail, fail, (n: number) => expect(n).toEqual(42));
+		pipe(
+			rd,
+			fold(fail, fail, fail, (n: number) => expect(n).toEqual(42)),
+		);
 		done();
 	});
 
@@ -33,7 +38,10 @@ describe('RemoteDataT', () => {
 		const rdTask = failure(task.of(new Error('oops')));
 		const rd = await rdTask();
 
-		rd.foldL(fail, fail, (e: Error) => expect(e.message).toEqual('oops'), fail);
+		pipe(
+			rd,
+			fold(fail, fail, (e: Error) => expect(e.message).toEqual('oops'), fail),
+		);
 		done();
 	});
 
@@ -42,7 +50,10 @@ describe('RemoteDataT', () => {
 		const rdTask = fromRemoteData(remoteData.success(42));
 		const rd = await rdTask();
 
-		rd.foldL(fail, fail, fail, (n: number) => expect(n).toEqual(42));
+		pipe(
+			rd,
+			fold(fail, fail, fail, (n: number) => expect(n).toEqual(42)),
+		);
 		done();
 	});
 

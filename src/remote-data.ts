@@ -1,12 +1,12 @@
-import { constFalse, FunctionN, Lazy, Predicate, identity } from 'fp-ts/lib/function';
+import { constFalse, FunctionN, Lazy, Predicate, identity, constant, Endomorphism } from 'fp-ts/lib/function';
 import { Monad2 } from 'fp-ts/lib/Monad';
 import { Foldable2 } from 'fp-ts/lib/Foldable';
 import { Alt2 } from 'fp-ts/lib/Alt';
 import { Extend2 } from 'fp-ts/lib/Extend';
 import { Traversable2 } from 'fp-ts/lib/Traversable';
 import { Bifunctor2 } from 'fp-ts/lib/Bifunctor';
-import { isNone, isSome, none, Option, some, fold as foldO } from 'fp-ts/lib/Option';
-import { Either, left, right, fold as foldE } from 'fp-ts/lib/Either';
+import { isNone, isSome, none, Option, some, fold as foldO, getShow as getShowOption } from 'fp-ts/lib/Option';
+import { Either, left, right, fold as foldEither } from 'fp-ts/lib/Either';
 import { Eq } from 'fp-ts/lib/Eq';
 
 import { array } from 'fp-ts/lib/Array';
@@ -19,6 +19,7 @@ import { sign } from 'fp-ts/lib/Ordering';
 import { Semigroup } from 'fp-ts/lib/Semigroup';
 import { Monoid } from 'fp-ts/lib/Monoid';
 import { pipe, pipeable } from 'fp-ts/lib/pipeable';
+import { Show, showNumber } from 'fp-ts/lib/Show';
 
 export const URI = 'RemoteData';
 export type URI = typeof URI;
@@ -29,879 +30,155 @@ declare module 'fp-ts/lib/HKT' {
 }
 
 export type RemoteProgress = {
-	loaded: number;
-	total: Option<number>;
-};
-const concatPendings = <L, A>(a: RemotePending<L, A>, b: RemotePending<L, A>): RemoteData<L, A> => {
-	if (isSome(a.progress) && isSome(b.progress)) {
-		const progressA = a.progress.value;
-		const progressB = b.progress.value;
-		if (isNone(progressA.total) || isNone(progressB.total)) {
-			//tslint:disable no-use-before-declare
-			return progress({
-				loaded: progressA.loaded + progressB.loaded,
-				total: none,
-			});
-			//tslint:enable no-use-before-declare
-		}
-		const totalA = progressA.total.value;
-		const totalB = progressB.total.value;
-		const total = totalA + totalB;
-		const loaded = (progressA.loaded * totalA + progressB.loaded * totalB) / (total * total);
-		//tslint:disable no-use-before-declare
-		return progress({
-			loaded,
-			total: some(total),
-		});
-		//tslint:enable no-use-before-declare
-	}
-	const noA = isNone(a.progress);
-	const noB = isNone(b.progress);
-	if (noA && !noB) {
-		return b;
-	}
-	if (!noA && noB) {
-		return a;
-	}
-	return pending; //tslint:disable-line no-use-before-declare
+	readonly loaded: number;
+	readonly total: Option<number>;
 };
 
-export class RemoteInitial<L, A> {
-	readonly _tag: 'RemoteInitial' = 'RemoteInitial';
-	// prettier-ignore
-	readonly '_URI': URI;
-	// prettier-ignore
-	readonly '_A': A;
-	// prettier-ignore
-	readonly '_L': L;
-
-	/**
-	 * `alt` short for alternative, takes another `RemoteData`.
-	 * If `this` `RemoteData` is a `RemoteSuccess` type then it will be returned.
-	 * If it is a "Left" part then it will return the next `RemoteSuccess` if it exist.
-	 * If both are "Left" parts then it will return next "Left" part.
-	 *
-	 * For example:
-	 *
-	 * `sucess(1).alt(initial) will return success(1)`
-	 *
-	 * `pending.alt(success(2) will return success(2)`
-	 *
-	 * `failure(new Error('err text')).alt(pending) will return pending`
-	 */
-	alt(fy: RemoteData<L, A>): RemoteData<L, A> {
-		return fy;
-	}
-
-	/**
-	 * Similar to `alt`, but lazy: it takes a function which returns `RemoteData` object.
-	 */
-	altL(fy: Lazy<RemoteData<L, A>>): RemoteData<L, A> {
-		return fy();
-	}
-
-	/**
-	 * `ap`, short for "apply". Takes a function `fab` that is in the context of `RemoteData`,
-	 * and applies that function to this `RemoteData`'s value.
-	 * If the `RemoteData` calling `ap` is a "Left" part it will return same "Left" part.
-	 * If you pass a "Left" part to `ap` as an argument, it will return same "Left" part regardless on `RemoteData` which calls `ap`.
-	 *
-	 * For example:
-	 *
-	 * `success(1).ap(success(x => x + 1)) will return success(2)`.
-	 *
-	 * `success(1).ap(initial) will return initial`.
-	 *
-	 * `pending.ap(success(x => x+1)) will return pending`.
-	 *
-	 * `failure(new Error('err text')).ap(initial) will return failure.`
-	 */
-	ap<B>(fab: RemoteData<L, FunctionN<[A], B>>): RemoteData<L, B> {
-		return fab.isFailure() ? ((fab as unknown) as RemoteFailure<L, B>) : initial; //tslint:disable-line no-use-before-declare
-	}
-
-	/**
-	 * Takes a function `f` and returns a result of applying it to `RemoteData` value.
-	 * It's a bit like a `map`, but `f` should returns `RemoteData<T>` instead of `T` in `map`.
-	 * If this `RemoteData` is "Left" part, then it will return the same "Left" part.
-	 *
-	 * For example:
-	 *
-	 * `success(1).chain(x => success(x + 1)) will return success(2)`
-	 *
-	 * `success(2).chain(() => pending) will return pending`
-	 *
-	 * `initial.chain(x => success(x)) will return initial`
-	 */
-	chain<B>(f: FunctionN<[A], RemoteData<L, B>>): RemoteData<L, B> {
-		return initial; //tslint:disable-line no-use-before-declare
-	}
-
-	bimap<V, B>(f: (l: L) => V, g: (a: A) => B): RemoteData<V, B> {
-		return initial; //tslint:disable-line no-use-before-declare
-	}
-
-	/**
-	 * Takes a function `f` and returns a result of applying it to `RemoteData`.
-	 * It's a bit like a `chain`, but `f` should takes `RemoteData<T>` instead of returns it, and it should return T instead of takes it.
-	 */
-	extend<B>(f: FunctionN<[RemoteData<L, A>], B>): RemoteData<L, B> {
-		return initial; //tslint:disable-line no-use-before-declare
-	}
-
-	/**
-	 * Needed for "unwrap" value from `RemoteData` "container".
-	 * It applies a function to each case in the data structure.
-	 *
-	 * For example:
-	 *
-	 * `const foldInitial = 'it's initial'
-	 * `const foldPending = 'it's pending'
-	 * `const foldFailure = (err) => 'it's failure'
-	 * `const foldSuccess = (data) => data + 1'
-	 *
-	 * `initial.fold(foldInitial, foldPending, foldFailure, foldSuccess) will return 'it's initial'`
-	 *
-	 * `pending.fold(foldInitial, foldPending, foldFailure, foldSuccess) will return 'it's pending'`
-	 *
-	 * `failure(new Error('error text')).fold(foldInitial, foldPending, foldFailure, foldSuccess) will return 'it's failure'`
-	 *
-	 * `success(21).fold(foldInitial, foldPending, foldFailure, foldSuccess) will return 22`
-	 */
-	fold<B>(onInitial: B, onPending: B, onFailure: FunctionN<[L], B>, onSuccess: FunctionN<[A], B>): B {
-		return onInitial;
-	}
-
-	/**
-	 * Same as `fold` but lazy: in `initial` and `pending` state it takes a function instead of value.
-	 *
-	 * For example:
-	 *
-	 * `const foldInitial = () => 'it's initial'
-	 * `const foldPending = () => 'it's pending'
-	 *
-	 * rest of example is similar to `fold`
-	 */
-	foldL<B>(
-		onInitial: Lazy<B>,
-		onPending: FunctionN<[Option<RemoteProgress>], B>,
-		onFailure: FunctionN<[L], B>,
-		onSuccess: FunctionN<[A], B>,
-	): B {
-		return onInitial();
-	}
-
-	/**
-	 * Same as `getOrElse` but lazy: it pass as an argument a function which returns a default value.
-	 *
-	 * For example:
-	 *
-	 * `some(1).getOrElse(() => 999) will return 1`
-	 *
-	 * `initial.getOrElseValue(() => 999) will return 999`
-	 */
-	getOrElseL(f: Lazy<A>): A {
-		return f();
-	}
-
-	/**
-	 * Takes a function `f`.
-	 * If it maps on `RemoteSuccess` then it will apply a function to `RemoteData`'s value
-	 * If it maps on "Left" part then it will return the same "Left" part.
-	 *
-	 * For example:
-	 *
-	 * `success(1).map(x => x + 99) will return success(100)`
-	 *
-	 * `initial.map(x => x + 99) will return initial`
-	 *
-	 * `pending.map(x => x + 99) will return pending`
-	 *
-	 * `failure(new Error('error text')).map(x => x + 99) will return failure(new Error('error text')`
-	 */
-	map<B>(f: FunctionN<[A], B>): RemoteData<L, B> {
-		return initial; //tslint:disable-line no-use-before-declare
-	}
-
-	/**
-	 * Similar to `map`, but it only map a `RemoteFailure` ("Left" part where we have some data, so we can map it).
-	 *
-	 * For example:
-	 *
-	 * `success(1).map(x => 'new error text') will return success(1)`
-	 *
-	 * `initial.map(x => 'new error text') will return initial`
-	 *
-	 * `failure(new Error('error text')).map(x => 'new error text') will return failure(new Error('new error text'))`
-	 */
-	mapLeft<M>(f: FunctionN<[L], M>): RemoteData<M, A> {
-		return initial; //tslint:disable-line no-use-before-declare
-	}
-
-	/**
-	 * Takes a default value as an argument.
-	 * If this `RemoteData` is "Left" part it will return default value.
-	 * If this `RemoteData` is `RemoteSuccess` it will return it's value ("wrapped" value, not default value)
-	 *
-	 * Note: Default value should be the same type as `RemoteData` (internal) value, if you want to pass different type as default, use `fold` or `foldL`.
-	 *
-	 * For example:
-	 *
-	 * `some(1).getOrElse(999) will return 1`
-	 *
-	 * `initial.getOrElseValue(999) will return 999`
-	 *
-	 */
-	getOrElse(value: A): A {
-		return value;
-	}
-
-	reduce<B>(f: FunctionN<[B, A], B>, b: B): B {
-		return b;
-	}
-
-	/**
-	 * Returns true only if `RemoteData` is `RemoteInitial`.
-	 *
-	 */
-	isInitial(): this is RemoteInitial<L, A> {
-		return true;
-	}
-
-	/**
-	 * Returns true only if `RemoteData` is `RemotePending`.
-	 *
-	 */
-	isPending(): this is RemotePending<L, A> {
-		return false;
-	}
-
-	/**
-	 * Returns true only if `RemoteData` is `RemoteFailure`.
-	 *
-	 */
-	isFailure(): this is RemoteFailure<L, A> {
-		return false;
-	}
-
-	/**
-	 * Returns true only if `RemoteData` is `RemoteSuccess`.
-	 *
-	 */
-	isSuccess(): this is RemoteSuccess<L, A> {
-		return false;
-	}
-
-	/**
-	 * Convert `RemoteData` to `Option`.
-	 * "Left" part will be converted to `None`.
-	 * `RemoteSuccess` will be converted to `Some`.
-	 *
-	 * For example:
-	 *
-	 * `success(2).toOption() will return some(2)`
-	 *
-	 * `initial.toOption() will return none`
-	 *
-	 * `pending.toOption() will return none`
-	 *
-	 * `failure(new Error('error text')).toOption() will return none`
-	 */
-	toOption(): Option<A> {
-		return none;
-	}
-
-	/**
-	 * Convert `RemoteData` to `Either`.
-	 * "Left" part will be converted to `Left<L>`.
-	 * Since `RemoteInitial` and `RemotePending` do not have `L` values,
-	 * you must provide a value of type `L` that will be used to construct
-	 * the `Left<L>` for those two cases.
-	 * `RemoteSuccess` will be converted to `Right<R>`.
-	 *
-	 * For example:
-	 *
-	 * `const iError = new Error('Data not fetched')`
-	 * `const pError = new Error('Data is fetching')`
-	 *
-	 * `success(2).toEither(iError, pError) will return right(2)`
-	 *
-	 * `initial.toEither(iError, pError) will return right(Error('Data not fetched'))`
-	 *
-	 * `pending.toEither(iError, pError) will return right(Error('Data is fetching'))`
-	 *
-	 * `failure(new Error('error text')).toEither(iError, pError) will return right(Error('error text'))`
-	 */
-	toEither(onInitial: L, onPending: L): Either<L, A> {
-		return left(onInitial);
-	}
-
-	/**
-	 * Like `toEither`, but lazy: it takes functions that return an `L` value
-	 * as arguments instead of an `L` value.
-	 *
-	 * For example:
-	 *
-	 * `const iError = () => new Error('Data not fetched')`
-	 * `const pError = () => new Error('Data is fetching')`
-	 *
-	 * `initial.toEither(iError, pError) will return right(Error('Data not fetched'))`
-	 *
-	 * `pending.toEither(iError, pError) will return right(Error('Data is fetching'))`
-	 */
-	toEitherL(onInitial: Lazy<L>, onPending: Lazy<L>): Either<L, A> {
-		return left(onInitial());
-	}
-
-	/**
-	 * One more way to fold (unwrap) value from `RemoteData`.
-	 * "Left" part will return `null`.
-	 * `RemoteSuccess` will return value.
-	 *
-	 * For example:
-	 *
-	 * `success(2).toNullable() will return 2`
-	 *
-	 * `initial.toNullable() will return null`
-	 *
-	 * `pending.toNullable() will return null`
-	 *
-	 * `failure(new Error('error text)).toNullable() will return null`
-	 *
-	 */
-	toNullable(): A | null {
-		return null;
-	}
-
-	/**
-	 * Returns string representation of `RemoteData`.
-	 */
-	toString(): string {
-		return 'initial';
-	}
-
-	/**
-	 * Compare values and returns `true` if they are identical, otherwise returns `false`.
-	 * "Left" part will return `false`.
-	 * `RemoteSuccess` will call `Eq`'s `equals` method.
-	 *
-	 * If you want to compare `RemoteData`'s values better use `getEq` or `getOrd` helpers.
-	 *
-	 */
-	contains(S: Eq<A>, a: A): boolean {
-		return false;
-	}
-
-	/**
-	 * Takes a predicate and apply it to `RemoteSuccess` value.
-	 * "Left" part will return `false`.
-	 */
-	exists(p: Predicate<A>): boolean {
-		return false;
-	}
-
-	/**
-	 * Maps this RemoteFailure error into RemoteSuccess if passed function f return {@link Some} value, otherwise returns self
-	 */
-	recover(f: (error: L) => Option<A>): RemoteData<L, A> {
-		return this;
-	}
-
-	/**
-	 * Recovers this RemoteFailure also mapping RemoteSuccess case
-	 * @see {@link recover}
-	 */
-	recoverMap<B>(f: (error: L) => Option<B>, g: (value: A) => B): RemoteData<L, B> {
-		return (this as unknown) as RemoteInitial<L, B>;
-	}
-}
-
-export class RemoteFailure<L, A> {
-	readonly _tag: 'RemoteFailure' = 'RemoteFailure';
-	// prettier-ignore
-	readonly '_URI': URI;
-	// prettier-ignore
-	readonly '_A': A;
-	// prettier-ignore
-	readonly '_L': L;
-
-	constructor(readonly error: L) {}
-
-	alt(fy: RemoteData<L, A>): RemoteData<L, A> {
-		return fy;
-	}
-
-	altL(fy: Lazy<RemoteData<L, A>>): RemoteData<L, A> {
-		return fy();
-	}
-
-	ap<B>(fab: RemoteData<L, FunctionN<[A], B>>): RemoteData<L, B> {
-		//tslint:disable-next-line no-use-before-declare
-		return fab.isFailure() ? ((fab as unknown) as RemoteFailure<L, B>) : ((this as unknown) as RemoteFailure<L, B>);
-	}
-
-	chain<B>(f: FunctionN<[A], RemoteData<L, B>>): RemoteData<L, B> {
-		return (this as unknown) as RemoteFailure<L, B>;
-	}
-
-	bimap<V, B>(f: (l: L) => V, g: (a: A) => B): RemoteData<V, B> {
-		return failure(f(this.error)); //tslint:disable-line no-use-before-declare
-	}
-
-	extend<B>(f: FunctionN<[RemoteData<L, A>], B>): RemoteData<L, B> {
-		return (this as unknown) as RemoteFailure<L, B>;
-	}
-
-	fold<B>(onInitial: B, onPending: B, onFailure: FunctionN<[L], B>, onSuccess: FunctionN<[A], B>): B {
-		return onFailure(this.error);
-	}
-
-	foldL<B>(
-		onInitial: Lazy<B>,
-		onPending: FunctionN<[Option<RemoteProgress>], B>,
-		onFailure: FunctionN<[L], B>,
-		onSuccess: FunctionN<[A], B>,
-	): B {
-		return onFailure(this.error);
-	}
-
-	getOrElseL(f: Lazy<A>): A {
-		return f();
-	}
-
-	map<B>(f: (a: A) => B): RemoteData<L, B> {
-		return (this as unknown) as RemoteFailure<L, B>;
-	}
-
-	mapLeft<M>(f: FunctionN<[L], M>): RemoteData<M, A> {
-		return failure(f(this.error)); //tslint:disable-line no-use-before-declare
-	}
-
-	getOrElse(value: A): A {
-		return value;
-	}
-
-	reduce<B>(f: FunctionN<[B, A], B>, b: B): B {
-		return b;
-	}
-
-	isInitial(): this is RemoteInitial<L, A> {
-		return false;
-	}
-
-	isPending(): this is RemotePending<L, A> {
-		return false;
-	}
-
-	isFailure(): this is RemoteFailure<L, A> {
-		return true;
-	}
-
-	isSuccess(): this is RemoteSuccess<L, A> {
-		return false;
-	}
-
-	toOption(): Option<A> {
-		return none;
-	}
-
-	toEither(onInitial: L, onPending: L): Either<L, A> {
-		return left(this.error);
-	}
-
-	toEitherL(onInitial: Lazy<L>, onPending: Lazy<L>): Either<L, A> {
-		return left(this.error);
-	}
-
-	toNullable(): A | null {
-		return null;
-	}
-
-	toString(): string {
-		return `failure(${String(this.error)})`;
-	}
-
-	contains(S: Eq<A>, a: A): boolean {
-		return false;
-	}
-
-	exists(p: Predicate<A>): boolean {
-		return false;
-	}
-
-	recover(f: (error: L) => Option<A>): RemoteData<L, A> {
-		return this.recoverMap(f, identity);
-	}
-
-	recoverMap<B>(f: (error: L) => Option<B>, g: (value: A) => B): RemoteData<L, B> {
-		return pipe(
-			f(this.error),
-			foldO(
-				() => (this as unknown) as RemoteData<L, B>,
-				(success as unknown) as (a: B) => RemoteData<L, B>, //tslint:disable-line no-use-before-declare
-			),
-		);
-	}
-}
-
-export class RemoteSuccess<L, A> {
-	readonly _tag: 'RemoteSuccess' = 'RemoteSuccess';
-	// prettier-ignore
-	readonly '_URI': URI;
-	// prettier-ignore
-	readonly '_A': A;
-	// prettier-ignore
-	readonly '_L': L;
-
-	constructor(readonly value: A) {}
-
-	alt(fy: RemoteData<L, A>): RemoteData<L, A> {
-		return this;
-	}
-
-	altL(fy: Lazy<RemoteData<L, A>>): RemoteData<L, A> {
-		return this;
-	}
-
-	ap<B>(fab: RemoteData<L, FunctionN<[A], B>>): RemoteData<L, B> {
-		return fab.fold(
-			initial, //tslint:disable-line no-use-before-declare
-			(fab as unknown) as RemoteData<L, B>,
-			() => (fab as unknown) as RemoteData<L, B>,
-			value => this.map(value),
-		);
-	}
-
-	chain<B>(f: FunctionN<[A], RemoteData<L, B>>): RemoteData<L, B> {
-		return f(this.value);
-	}
-
-	bimap<V, B>(f: (l: L) => V, g: (a: A) => B): RemoteData<V, B> {
-		return success(g(this.value)); //tslint:disable-line no-use-before-declare
-	}
-
-	extend<B>(f: FunctionN<[RemoteData<L, A>], B>): RemoteData<L, B> {
-		return remoteData.of(f(this)); //tslint:disable-line no-use-before-declare
-	}
-
-	fold<B>(onInitial: B, onPending: B, onFailure: FunctionN<[L], B>, onSuccess: FunctionN<[A], B>): B {
-		return onSuccess(this.value);
-	}
-
-	foldL<B>(
-		onInitial: Lazy<B>,
-		onPending: FunctionN<[Option<RemoteProgress>], B>,
-		onFailure: FunctionN<[L], B>,
-		onSuccess: FunctionN<[A], B>,
-	): B {
-		return onSuccess(this.value);
-	}
-
-	getOrElseL(f: Lazy<A>): A {
-		return this.value;
-	}
-
-	map<B>(f: FunctionN<[A], B>): RemoteData<L, B> {
-		return remoteData.of(f(this.value)); //tslint:disable-line no-use-before-declare
-	}
-
-	mapLeft<M>(f: FunctionN<[L], M>): RemoteData<M, A> {
-		return (this as unknown) as RemoteSuccess<M, A>;
-	}
-
-	getOrElse(value: A): A {
-		return this.value;
-	}
-
-	reduce<B>(f: FunctionN<[B, A], B>, b: B): B {
-		return f(b, this.value);
-	}
-
-	isInitial(): this is RemoteInitial<L, A> {
-		return false;
-	}
-
-	isPending(): this is RemotePending<L, A> {
-		return false;
-	}
-
-	isFailure(): this is RemoteFailure<L, A> {
-		return false;
-	}
-
-	isSuccess(): this is RemoteSuccess<L, A> {
-		return true;
-	}
-
-	toOption(): Option<A> {
-		return some(this.value);
-	}
-
-	toEither(onInitial: L, onPending: L): Either<L, A> {
-		return right(this.value);
-	}
-
-	toEitherL(onInitial: Lazy<L>, onPending: Lazy<L>): Either<L, A> {
-		return right(this.value);
-	}
-
-	toNullable(): A | null {
-		return this.value;
-	}
-
-	toString(): string {
-		return `success(${String(this.value)})`;
-	}
-
-	contains(S: Eq<A>, a: A): boolean {
-		return S.equals(this.value, a);
-	}
-
-	exists(p: Predicate<A>): boolean {
-		return p(this.value);
-	}
-
-	recover(f: (error: L) => Option<A>): RemoteData<L, A> {
-		return this;
-	}
-
-	recoverMap<B>(f: (error: L) => Option<B>, g: (value: A) => B): RemoteData<L, B> {
-		return this.map(g);
-	}
-}
-
-export class RemotePending<L, A> {
-	readonly _tag: 'RemotePending' = 'RemotePending';
-	// prettier-ignore
-	readonly '_URI': URI;
-	// prettier-ignore
-	readonly '_A': A;
-	// prettier-ignore
-	readonly '_L': L;
-
-	constructor(readonly progress: Option<RemoteProgress> = none) {}
-
-	alt(fy: RemoteData<L, A>): RemoteData<L, A> {
-		return fy;
-	}
-
-	altL(fy: Lazy<RemoteData<L, A>>): RemoteData<L, A> {
-		return fy();
-	}
-
-	ap<B>(fab: RemoteData<L, FunctionN<[A], B>>): RemoteData<L, B> {
-		return fab.fold(
-			initial, //tslint:disable-line no-use-before-declare
-			fab.isPending()
-				? ((concatPendings(this, (fab as unknown) as RemotePending<L, A>) as unknown) as RemotePending<L, B>)
-				: ((this as unknown) as RemoteData<L, B>),
-			() => (fab as unknown) as RemoteFailure<L, B>,
-			() => (this as unknown) as RemoteSuccess<L, B>,
-		);
-	}
-
-	chain<B>(f: FunctionN<[A], RemoteData<L, B>>): RemoteData<L, B> {
-		return pending; //tslint:disable-line no-use-before-declare
-	}
-
-	bimap<V, B>(f: (l: L) => V, g: (a: A) => B): RemoteData<V, B> {
-		return pending; //tslint:disable-line no-use-before-declare
-	}
-
-	extend<B>(f: FunctionN<[RemoteData<L, A>], B>): RemoteData<L, B> {
-		return pending; //tslint:disable-line no-use-before-declare
-	}
-
-	fold<B>(onInitial: B, onPending: B, onFailure: FunctionN<[L], B>, onSuccess: FunctionN<[A], B>): B {
-		return onPending;
-	}
-
-	foldL<B>(
-		onInitial: Lazy<B>,
-		onPending: FunctionN<[Option<RemoteProgress>], B>,
-		onFailure: FunctionN<[L], B>,
-		onSuccess: FunctionN<[A], B>,
-	): B {
-		return onPending(this.progress);
-	}
-
-	getOrElseL(f: Lazy<A>): A {
-		return f();
-	}
-
-	map<B>(f: FunctionN<[A], B>): RemoteData<L, B> {
-		return (this as unknown) as RemotePending<L, B>;
-	}
-
-	mapLeft<M>(f: FunctionN<[L], M>): RemoteData<M, A> {
-		return pending; //tslint:disable-line no-use-before-declare
-	}
-
-	getOrElse(value: A): A {
-		return value;
-	}
-
-	reduce<B>(f: FunctionN<[B, A], B>, b: B): B {
-		return b;
-	}
-
-	isInitial(): this is RemoteInitial<L, A> {
-		return false;
-	}
-
-	isPending(): this is RemotePending<L, A> {
-		return true;
-	}
-
-	isFailure(): this is RemoteFailure<L, A> {
-		return false;
-	}
-
-	isSuccess(): this is RemoteSuccess<L, A> {
-		return false;
-	}
-
-	toOption(): Option<A> {
-		return none;
-	}
-
-	toEither(onInitial: L, onPending: L): Either<L, A> {
-		return left(onPending);
-	}
-
-	toEitherL(onInitial: Lazy<L>, onPending: Lazy<L>): Either<L, A> {
-		return left(onPending());
-	}
-
-	toNullable(): A | null {
-		return null;
-	}
-
-	toString(): string {
-		return 'pending';
-	}
-
-	contains(S: Eq<A>, a: A): boolean {
-		return false;
-	}
-
-	exists(p: Predicate<A>): boolean {
-		return false;
-	}
-
-	recover(f: (error: L) => Option<A>): RemoteData<L, A> {
-		return this;
-	}
-
-	recoverMap<B>(f: (error: L) => Option<B>, g: (value: A) => B): RemoteData<L, B> {
-		return (this as unknown) as RemotePending<L, B>;
-	}
-}
+export type RemoteInitial = {
+	readonly _tag: 'RemoteInitial';
+};
+
+export type RemotePending = {
+	readonly _tag: 'RemotePending';
+	readonly progress: Option<RemoteProgress>;
+};
+
+export type RemoteFailure<E> = {
+	readonly _tag: 'RemoteFailure';
+	readonly error: E;
+};
+
+export type RemoteSuccess<A> = {
+	readonly _tag: 'RemoteSuccess';
+	readonly value: A;
+};
 
 /**
  * Represents a value of one of four possible types (a disjoint union)
  *
- * An instance of `RemoteData` is either an instance of `RemoteInitial`, `RemotePending`, `RemoteFailure` or `RemoteSuccess`
+ * An instance of {@link RemoteData} is either an instance of {@link RemoteInitial}, {@link RemotePending}, {@link RemoteFailure} or {@link RemoteSuccess}
  *
- * A common use of `RemoteData` is as an alternative to `Either` or `Option` supporting initial and pending states (fits best with [RXJS]{@link https://github.com/ReactiveX/rxjs/}).
+ * A common use of {@link RemoteData} is as an alternative to `Either` or `Option` supporting initial and pending states (fits best with [RXJS]{@link https://github.com/ReactiveX/rxjs/}).
  *
- * Note: `RemoteInitial`, `RemotePending` and `RemoteFailure` are commonly called "Left" part in jsDoc.
+ * Note: {@link RemoteInitial}, {@link RemotePending} and {@link RemoteFailure} are commonly called "Left" part in jsDoc.
  *
  * @see https://medium.com/@gcanti/slaying-a-ui-antipattern-with-flow-5eed0cfb627b
  *
  */
-export type RemoteData<L, A> = RemoteInitial<L, A> | RemoteFailure<L, A> | RemoteSuccess<L, A> | RemotePending<L, A>;
+export type RemoteData<E, A> = RemoteInitial | RemotePending | RemoteFailure<E> | RemoteSuccess<A>;
 
 //constructors
-export const failure = <L, A>(error: L): RemoteData<L, A> => new RemoteFailure(error);
-export const success = <L, A>(value: A): RemoteData<L, A> => new RemoteSuccess(value);
-export const pending: RemoteData<never, never> = new RemotePending<never, never>();
-export const progress = <L, A>(progress: RemoteProgress): RemoteData<L, A> => new RemotePending(some(progress));
-export const initial: RemoteData<never, never> = new RemoteInitial<never, never>();
+export const failure = <E>(error: E): RemoteData<E, never> => ({
+	_tag: 'RemoteFailure',
+	error,
+});
+export const success = <A>(value: A): RemoteData<never, A> => ({
+	_tag: 'RemoteSuccess',
+	value,
+});
+export const pending: RemoteData<never, never> = {
+	_tag: 'RemotePending',
+	progress: none,
+};
+export const progress = (progress: RemoteProgress): RemoteData<never, never> => ({
+	_tag: 'RemotePending',
+	progress: some(progress),
+});
+export const initial: RemoteData<never, never> = {
+	_tag: 'RemoteInitial',
+};
 
 //filters
-export const isFailure = <L, A>(data: RemoteData<L, A>): data is RemoteFailure<L, A> => data.isFailure();
-export const isSuccess = <L, A>(data: RemoteData<L, A>): data is RemoteSuccess<L, A> => data.isSuccess();
-export const isPending = <L, A>(data: RemoteData<L, A>): data is RemotePending<L, A> => data.isPending();
-export const isInitial = <L, A>(data: RemoteData<L, A>): data is RemoteInitial<L, A> => data.isInitial();
+/**
+ * Returns true only if {@link RemoteData} is {@link RemoteFailure}
+ */
+export const isFailure = <E>(data: RemoteData<E, unknown>): data is RemoteFailure<E> => data._tag === 'RemoteFailure';
 
+/**
+ * Returns true only if {@link RemoteData} is {@link RemoteSuccess}
+ */
+export const isSuccess = <A>(data: RemoteData<unknown, A>): data is RemoteSuccess<A> => data._tag === 'RemoteSuccess';
+
+/**
+ * Returns true only if {@link RemoteData} is {@link RemotePending}
+ */
+export const isPending = (data: RemoteData<unknown, unknown>): data is RemotePending => data._tag === 'RemotePending';
+
+/**
+ * Returns true only if {@link RemoteData} is {@link RemoteInitial}
+ */
+export const isInitial = (data: RemoteData<unknown, unknown>): data is RemoteInitial => data._tag === 'RemoteInitial';
+
+/**
+ * Takes a default value as an argument.
+ * If this {@link RemoteData} is "Left" part it will return default value.
+ * If this {@link RemoteData} is {@link RemoteSuccess} it will return it's value ("wrapped" value, not default value)
+ *
+ * Note: Default value should be the same type as {@link RemoteData} (internal) value, if you want to pass different type as default, use {@link fold}.
+ *
+ * @example
+ * getOrElse(() => 999)(some(1)) // 1
+ * getOrElseValue(() => 999)(initial) // 999
+ */
 export const getOrElse = <L, A>(f: Lazy<A>) => (ma: RemoteData<L, A>): A => (isSuccess(ma) ? ma.value : f());
 
-export const fold = <L, A, B>(
-	onInitial: Lazy<B>,
-	onPending: FunctionN<[Option<RemoteProgress>], B>,
-	onFailure: FunctionN<[L], B>,
-	onSuccess: FunctionN<[A], B>,
-) => (ma: RemoteData<L, A>): B =>
-	isInitial(ma)
-		? onInitial()
-		: isPending(ma)
-		? onPending(ma.progress)
-		: isFailure(ma)
-		? onFailure(ma.error)
-		: onSuccess(ma.value);
+/**
+ * Needed for "unwrap" value from {@link RemoteData} "container".
+ * It applies a function to each case in the data structure.
+ *
+ * @example
+ * const onInitial = "it's initial"
+ * const onPending = "it's pending"
+ * const onFailure = (err) => "it's failure"
+ * const onSuccess = (data) => `${data + 1}`
+ * const f = fold(onInitial, onPending, onFailure, onSuccess)
+ *
+ * f(initial) // "it's initial"
+ * f(pending) // "it's pending"
+ * f(failure(new Error('error text'))) // "it's failure"
+ * f(success(21)) // '22'
+ */
+export const fold = <E, A, B>(
+	onInitial: () => B,
+	onPending: (progress: Option<RemoteProgress>) => B,
+	onFailure: (error: E) => B,
+	onSuccess: (value: A) => B,
+) => (ma: RemoteData<E, A>): B => {
+	switch (ma._tag) {
+		case 'RemoteInitial': {
+			return onInitial();
+		}
+		case 'RemotePending': {
+			return onPending(ma.progress);
+		}
+		case 'RemoteFailure': {
+			return onFailure(ma.error);
+		}
+		case 'RemoteSuccess': {
+			return onSuccess(ma.value);
+		}
+	}
+};
 
+/**
+ * One more way to fold (unwrap) value from {@link RemoteData}.
+ * `Left` part will return `null`.
+ * {@link RemoteSuccess} will return value.
+ *
+ * For example:
+ *
+ * `success(2).toNullable() will return 2`
+ *
+ * `initial.toNullable() will return null`
+ *
+ * `pending.toNullable() will return null`
+ *
+ * `failure(new Error('error text)).toNullable() will return null`
+ *
+ */
 export const toNullable = <L, A>(ma: RemoteData<L, A>): A | null => (isSuccess(ma) ? ma.value : null);
 
 export const toUndefined = <L, A>(ma: RemoteData<L, A>): A | undefined => (isSuccess(ma) ? ma.value : undefined);
-
-//Eq
-export const getEq = <L, A>(SL: Eq<L>, SA: Eq<A>): Eq<RemoteData<L, A>> => {
-	return {
-		equals: (x, y) =>
-			x.foldL(
-				() => y.isInitial(),
-				() => y.isPending(),
-				xError => y.foldL(constFalse, constFalse, yError => SL.equals(xError, yError), constFalse),
-				ax => y.foldL(constFalse, constFalse, constFalse, ay => SA.equals(ax, ay)),
-			),
-	};
-};
-
-//Ord
-export const getOrd = <L, A>(OL: Ord<L>, OA: Ord<A>): Ord<RemoteData<L, A>> => {
-	return {
-		...getEq(OL, OA),
-		compare: (x, y) =>
-			sign(
-				x.foldL(
-					() => y.fold(0, -1, () => -1, () => -1),
-					() => y.fold(1, 0, () => -1, () => -1),
-					xError => y.fold(1, 1, yError => OL.compare(xError, yError), () => -1),
-					xValue => y.fold(1, 1, () => 1, yValue => OA.compare(xValue, yValue)),
-				),
-			),
-	};
-};
-
-//Semigroup
-export const getSemigroup = <L, A>(SL: Semigroup<L>, SA: Semigroup<A>): Semigroup<RemoteData<L, A>> => {
-	return {
-		concat: (x, y) => {
-			return x.foldL(
-				() => y.fold(y, y, () => y, () => y),
-				() =>
-					y.foldL(
-						() => x,
-						() => concatPendings(x as RemotePending<L, A>, y as RemotePending<L, A>),
-						() => y,
-						() => y,
-					),
-
-				xError => y.fold(x, x, yError => failure(SL.concat(xError, yError)), () => y),
-				xValue => y.fold(x, x, () => x, yValue => success(SA.concat(xValue, yValue))),
-			);
-		},
-	};
-};
-
-//Monoid
-export const getMonoid = <L, A>(SL: Semigroup<L>, SA: Semigroup<A>): Monoid<RemoteData<L, A>> => {
-	return {
-		...getSemigroup(SL, SA),
-		empty: initial,
-	};
-};
 
 export function fromOption<L, A>(option: Option<A>, error: Lazy<L>): RemoteData<L, A> {
 	if (isNone(option)) {
@@ -911,11 +188,50 @@ export function fromOption<L, A>(option: Option<A>, error: Lazy<L>): RemoteData<
 	}
 }
 
-export function fromEither<L, A>(either: Either<L, A>): RemoteData<L, A> {
-	return pipe(
-		either,
-		foldE(l => failure(l), r => success(r)),
-	);
+/**
+ * Convert {@link RemoteData} to {@link Option}
+ * `Left` part will be converted to {@link None}.
+ * {@link RemoteSuccess} will be converted to {@link Some}.
+ *
+ * @example
+ * toOption(success(2)) // some(2)
+ * toOption(initial) // none
+ * toOption(pending) // none
+ * toOption(failure(new Error('error text'))) // none
+ */
+export function toOption<E, A>(data: RemoteData<E, A>): Option<A> {
+	return data._tag === 'RemoteSuccess' ? some(data.value) : none;
+}
+
+/**
+ * Creates {@link RemoteData} from {@link Either}
+ */
+export const fromEither: <E, A>(ea: Either<E, A>) => RemoteData<E, A> = foldEither(failure, success as any);
+
+/**
+ * Convert {@link RemoteData} to `Either`.
+ * `Left` part will be converted to `Left<L>`.
+ * Since {@link RemoteInitial} and {@link RemotePending} do not have `L` values,
+ * you must provide a value of type `L` that will be used to construct
+ * the `Left<L>` for those two cases.
+ * {@link RemoteSuccess} will be converted to `Right<R>`.
+ *
+ * @example:
+ * const f = toEither(
+ * 		() => new Error('Data not fetched'),
+ * 		() => new Error('Data is fetching')
+ * )
+ * f(success(2)) // right(2)
+ * f(initial) // right(Error('Data not fetched'))
+ * f(pending) // right(Error('Data is fetching'))
+ * f(failure(new Error('error text'))) // right(Error('error text'))
+ */
+export function toEither<E>(onInitial: () => E, onPending: () => E): <A>(data: RemoteData<E, A>) => Either<E, A> {
+	return data =>
+		pipe(
+			data,
+			fold(() => left(onInitial()), () => left(onPending()), left, right),
+		);
 }
 
 export function fromPredicate<L, A>(
@@ -925,12 +241,101 @@ export function fromPredicate<L, A>(
 	return a => (predicate(a) ? success(a) : failure(whenFalse(a)));
 }
 
-export function fromProgressEvent<L, A>(event: ProgressEvent): RemoteData<L, A> {
+/**
+ * Create {@link RemoteData} from {@link ProgressEvent}
+ * @param event
+ */
+export function fromProgressEvent(event: ProgressEvent): RemoteData<never, never> {
 	return progress({
 		loaded: event.loaded,
 		total: event.lengthComputable ? some(event.total) : none,
 	});
 }
+
+/**
+ * Compare values and returns `true` if they are identical, otherwise returns `false`.
+ * `Left` part will return `false`.
+ * {@link RemoteSuccess} will call {@link Eq.equals}.
+ *
+ * If you want to compare {@link RemoteData}'s values better use {@link getEq} or {@link getOrd} helpers.
+ *
+ */
+export function elem<A>(E: Eq<A>): (a: A, fa: RemoteData<unknown, A>) => boolean {
+	return (a, fa) => fa._tag === 'RemoteSuccess' && E.equals(a, fa.value);
+}
+
+/**
+ * Takes a predicate and apply it to {@link RemoteSuccess} value.
+ * `Left` part will return `false`.
+ */
+export function exists<A>(p: Predicate<A>): (fa: RemoteData<unknown, A>) => boolean {
+	return fa => fa._tag === 'RemoteSuccess' && p(fa.value);
+}
+
+/**
+ * Maps this RemoteFailure error into RemoteSuccess if passed function `f` return {@link Some} value, otherwise returns self
+ */
+export function recover<E, A>(f: (error: E) => Option<A>): (fa: RemoteData<E, A>) => RemoteData<E, A> {
+	const r: Endomorphism<RemoteData<E, A>> = recoverMap(f, identity);
+	return fa => (fa._tag === 'RemoteFailure' ? r(fa) : fa);
+}
+
+/**
+ * Recovers {@link RemoteFailure} also mapping {@link RemoteSuccess} case
+ * @see {@link recover}
+ */
+export function recoverMap<E, A, B>(
+	f: (error: E) => Option<B>,
+	g: (value: A) => B,
+): (fa: RemoteData<E, A>) => RemoteData<E, B> {
+	return fa => {
+		switch (fa._tag) {
+			case 'RemoteInitial': {
+				return fa;
+			}
+			case 'RemotePending': {
+				return fa;
+			}
+			case 'RemoteFailure': {
+				const b = f(fa.error);
+				return b._tag === 'Some' ? success(b.value) : fa;
+			}
+			case 'RemoteSuccess': {
+				return success(g(fa.value));
+			}
+		}
+	};
+}
+
+const concatPendings = <L, A>(a: RemotePending, b: RemotePending): RemoteData<L, A> => {
+	if (isSome(a.progress) && isSome(b.progress)) {
+		const progressA = a.progress.value;
+		const progressB = b.progress.value;
+		if (isNone(progressA.total) || isNone(progressB.total)) {
+			return progress({
+				loaded: progressA.loaded + progressB.loaded,
+				total: none,
+			});
+		}
+		const totalA = progressA.total.value;
+		const totalB = progressB.total.value;
+		const total = totalA + totalB;
+		const loaded = (progressA.loaded * totalA + progressB.loaded * totalB) / (total * total);
+		return progress({
+			loaded,
+			total: some(total),
+		});
+	}
+	const noA = isNone(a.progress);
+	const noB = isNone(b.progress);
+	if (noA && !noB) {
+		return b;
+	}
+	if (!noA && noB) {
+		return a;
+	}
+	return pending;
+};
 
 //instance
 export const remoteData: Monad2<URI> &
@@ -944,45 +349,197 @@ export const remoteData: Monad2<URI> &
 	URI,
 
 	//Monad
-	of: <L, A>(value: A): RemoteSuccess<L, A> => new RemoteSuccess(value),
-	ap: <L, A, B>(fab: RemoteData<L, FunctionN<[A], B>>, fa: RemoteData<L, A>): RemoteData<L, B> => fa.ap(fab),
-	map: <L, A, B>(fa: RemoteData<L, A>, f: FunctionN<[A], B>): RemoteData<L, B> => fa.map(f),
-	chain: <L, A, B>(fa: RemoteData<L, A>, f: FunctionN<[A], RemoteData<L, B>>): RemoteData<L, B> => fa.chain(f),
+	of: <A>(value: A): RemoteData<never, A> => success(value),
+	ap: <E, A, B>(fab: RemoteData<E, FunctionN<[A], B>>, fa: RemoteData<E, A>): RemoteData<E, B> => {
+		switch (fa._tag) {
+			case 'RemoteInitial': {
+				return isFailure(fab) ? fab : initial;
+			}
+			case 'RemotePending': {
+				return isPending(fab) ? concatPendings(fa, fab) : isSuccess(fab) ? fa : fab;
+			}
+			case 'RemoteFailure': {
+				return isFailure(fab) ? fab : fa;
+			}
+			case 'RemoteSuccess': {
+				return isSuccess(fab) ? success(fab.value(fa.value)) : fab;
+			}
+		}
+	},
+	map: <L, A, B>(fa: RemoteData<L, A>, f: FunctionN<[A], B>): RemoteData<L, B> =>
+		isSuccess(fa) ? success(f(fa.value)) : fa,
+	chain: <L, A, B>(fa: RemoteData<L, A>, f: FunctionN<[A], RemoteData<L, B>>): RemoteData<L, B> =>
+		isSuccess(fa) ? f(fa.value) : fa,
 
 	//Foldable
-	reduce: <L, A, B>(fa: RemoteData<L, A>, b: B, f: FunctionN<[B, A], B>): B => fa.reduce(f, b),
-	reduceRight: <L, A, B>(fa: RemoteData<L, A>, b: B, f: (a: A, b: B) => B): B =>
-		fa.isSuccess() ? f(fa.value, b) : b,
+	reduce: <L, A, B>(fa: RemoteData<L, A>, b: B, f: FunctionN<[B, A], B>): B =>
+		pipe(
+			fa,
+			fold(() => b, () => b, () => b, a => f(b, a)),
+		),
+	reduceRight: <L, A, B>(fa: RemoteData<L, A>, b: B, f: (a: A, b: B) => B): B => (isSuccess(fa) ? f(fa.value, b) : b),
 	foldMap: <M>(M: Monoid<M>) => <L, A>(fa: RemoteData<L, A>, f: (a: A) => M): M =>
-		fa.isSuccess() ? f(fa.value) : M.empty,
+		isSuccess(fa) ? f(fa.value) : M.empty,
 
 	//Traversable
-	traverse: <F>(F: Applicative<F>) => <L, A, B>(
-		ta: RemoteData<L, A>,
+	traverse: <F>(F: Applicative<F>) => <E, A, B>(
+		ta: RemoteData<E, A>,
 		f: (a: A) => HKT<F, B>,
-	): HKT<F, RemoteData<L, B>> => {
-		if (ta.isSuccess()) {
-			return F.map<B, RemoteData<L, B>>(f(ta.value), remoteData.of);
+	): HKT<F, RemoteData<E, B>> => {
+		if (isSuccess(ta)) {
+			return F.map(f(ta.value), a => remoteData.of(a));
 		} else {
-			return F.of((ta as unknown) as RemoteFailure<L, B> | RemoteInitial<L, B> | RemotePending<L, B>);
+			return F.of(ta);
 		}
 	},
 	sequence: <F>(F: Applicative<F>) => <L, A>(ta: RemoteData<L, HKT<F, A>>): HKT<F, RemoteData<L, A>> =>
 		remoteData.traverse(F)(ta, identity),
 
 	//Bifunctor
-	bimap: <L, V, A, B>(fla: RemoteData<L, A>, f: (u: L) => V, g: (a: A) => B): RemoteData<V, B> => fla.bimap(f, g),
-	mapLeft: <L, V, A>(fla: RemoteData<L, A>, f: (u: L) => V): RemoteData<V, A> => fla.mapLeft(f),
+	bimap: <L, V, A, B>(fla: RemoteData<L, A>, f: (u: L) => V, g: (a: A) => B): RemoteData<V, B> =>
+		pipe(
+			fla,
+			fold<L, A, RemoteData<V, B>>(() => initial, () => pending, e => failure(f(e)), a => success(g(a))),
+		),
+	mapLeft: <L, V, A>(fla: RemoteData<L, A>, f: (u: L) => V): RemoteData<V, A> =>
+		fold<L, A, RemoteData<V, A>>(() => initial, () => pending, e => failure(f(e)), () => fla as any)(fla),
 
 	//Alt
-	alt: <L, A>(fx: RemoteData<L, A>, fy: () => RemoteData<L, A>): RemoteData<L, A> => fx.alt(fy()),
+	alt: <L, A>(fx: RemoteData<L, A>, fy: () => RemoteData<L, A>): RemoteData<L, A> => fold(fy, fy, fy, () => fx)(fx),
 
 	//Alternative
 	zero: <L, A>(): RemoteData<L, A> => initial,
 
 	//Extend
-	extend: <L, A, B>(fla: RemoteData<L, A>, f: FunctionN<[RemoteData<L, A>], B>): RemoteData<L, B> => fla.extend(f),
+	extend: <L, A, B>(fla: RemoteData<L, A>, f: FunctionN<[RemoteData<L, A>], B>): RemoteData<L, B> =>
+		pipe(
+			fla,
+			fold<L, A, RemoteData<L, B>>(() => initial, () => pending, () => fla as any, () => success(f(fla))),
+		),
 };
+
+//Eq
+export const getEq = <E, A>(EE: Eq<E>, EA: Eq<A>): Eq<RemoteData<E, A>> => {
+	return {
+		equals: (x, y) =>
+			pipe(
+				x,
+				fold(
+					() => isInitial(y),
+					() => isPending(y),
+					xError =>
+						pipe(
+							y,
+							fold(constFalse, constFalse, yError => EE.equals(xError, yError), constFalse),
+						),
+					ax =>
+						pipe(
+							y,
+							fold(constFalse, constFalse, constFalse, ay => EA.equals(ax, ay)),
+						),
+				),
+			),
+	};
+};
+
+//Ord
+const constLt = constant(-1);
+const constEq = constant(0);
+const constGt = constant(1);
+export const getOrd = <E, A>(OE: Ord<E>, OA: Ord<A>): Ord<RemoteData<E, A>> => {
+	return {
+		...getEq(OE, OA),
+		compare: (x, y) =>
+			sign(
+				pipe(
+					x,
+					fold(
+						() =>
+							pipe(
+								y,
+								fold(constEq, constLt, constLt, constLt),
+							),
+						() =>
+							pipe(
+								y,
+								fold(constGt, constEq, constLt, constLt),
+							),
+						xError =>
+							pipe(
+								y,
+								fold(constGt, constGt, yError => OE.compare(xError, yError), constLt),
+							),
+						xValue =>
+							pipe(
+								y,
+								fold(constGt, constGt, constGt, yValue => OA.compare(xValue, yValue)),
+							),
+					),
+				),
+			),
+	};
+};
+
+//Semigroup
+export const getSemigroup = <E, A>(SE: Semigroup<E>, SA: Semigroup<A>): Semigroup<RemoteData<E, A>> => {
+	return {
+		concat: (x, y) => {
+			const constX = constant(x);
+			const constY = constant(y);
+			return pipe(
+				x,
+				fold(
+					() =>
+						pipe(
+							y,
+							fold(constY, constY, constY, constY),
+						),
+					() =>
+						pipe(
+							y,
+							fold(constX, () => concatPendings(x as RemotePending, y as RemotePending), constY, constY),
+						),
+
+					xError =>
+						pipe(
+							y,
+							fold(constX, constX, yError => failure(SE.concat(xError, yError)), () => y),
+						),
+					xValue =>
+						pipe(
+							y,
+							fold(constX, constX, () => x, yValue => success(SA.concat(xValue, yValue))),
+						),
+				),
+			);
+		},
+	};
+};
+
+//Monoid
+export const getMonoid = <L, A>(SL: Semigroup<L>, SA: Semigroup<A>): Monoid<RemoteData<L, A>> => {
+	return {
+		...getSemigroup(SL, SA),
+		empty: initial,
+	};
+};
+
+const showOptionNumber = getShowOption(showNumber);
+//Show
+export const getShow = <E, A>(SE: Show<E>, SA: Show<A>): Show<RemoteData<E, A>> => ({
+	show: fold(
+		() => 'initial',
+		foldO(
+			() => 'pending',
+			progress =>
+				`progress({ loaded: ${showNumber.show(progress.loaded)}, total: ${showOptionNumber.show(
+					progress.total,
+				)} })`,
+		),
+		e => `failure(${SE.show(e)})`,
+		a => `success(${SA.show(a)})`,
+	),
+});
 
 const {
 	alt,

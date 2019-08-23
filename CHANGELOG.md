@@ -1,3 +1,26 @@
+# [2.0.0](https://github.com/devex-web-frontend/remote-data-ts/compare/v0.6.0...v2.0.0) (2019-08-23)
+
+
+### Code Refactoring
+
+* fp-ts@2 support added ([#34](https://github.com/devex-web-frontend/remote-data-ts/issues/34)) ([b7ad152](https://github.com/devex-web-frontend/remote-data-ts/commit/b7ad152))
+
+
+### feature
+
+* classless ([#35](https://github.com/devex-web-frontend/remote-data-ts/issues/35)) ([7351a88](https://github.com/devex-web-frontend/remote-data-ts/commit/7351a88))
+* update RemoteDataT ([#36](https://github.com/devex-web-frontend/remote-data-ts/issues/36)) ([4249fc2](https://github.com/devex-web-frontend/remote-data-ts/commit/4249fc2))
+
+
+### BREAKING CHANGES
+
+* transformer was completely rewritten
+* removed classes
+* simplified `io-ts` codec
+* fp-ts and io-ts-types dependencies updated to latest stable version
+
+
+
 # [0.6.0](https://github.com/devex-web-frontend/remote-data-ts/compare/v0.5.0...v0.6.0) (2019-05-26)
 
 

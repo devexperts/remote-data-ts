@@ -37,12 +37,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/devex-web-frontend/remote-data-ts.git"
+    "url": "git+https://github.com/devexperts/remote-data-ts.git"
   },
   "bugs": {
-    "url": "https://github.com/devex-web-frontend/remote-data-ts/issues"
+    "url": "https://github.com/devexperts/remote-data-ts/issues"
   },
-  "homepage": "https://github.com/devex-web-frontend/remote-data-ts#readme",
+  "homepage": "https://github.com/devexperts/remote-data-ts#readme",
   "description": "RemoteData type",
   "tags": [
     "typescript",

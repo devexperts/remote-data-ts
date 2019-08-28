@@ -1,6 +1,6 @@
 {
   "extends": [
-    "dx-lint/tslint.json",
+    "@devexperts/lint/tslint.json",
     "tslint-config-prettier"
   ],
   "rulesDirectory": [

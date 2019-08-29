@@ -1,5 +1,3 @@
-Just test CLA.
-
 # RemoteData type [![Build Status](https://travis-ci.org/devexperts/remote-data-ts.svg?branch=master)](https://travis-ci.org/devexperts/remote-data-ts)
 ### Description
 RemoteData is an ADT (algebraic data type) described in [this article](https://medium.com/@gcanti/slaying-a-ui-antipattern-with-flow-5eed0cfb627b). Heavily based on [fp-ts](https://github.com/gcanti/fp-ts) lib.

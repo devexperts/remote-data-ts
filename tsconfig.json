@@ -9,7 +9,8 @@
     "strict": true,
     "importHelpers": true,
     "pretty": true,
-    "noUnusedLocals": true
+    "noUnusedLocals": true,
+    "noEmitOnError": true
   },
   "include": [
     "./src/**/*"

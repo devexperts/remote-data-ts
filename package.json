@@ -2,9 +2,10 @@
   "name": "@devexperts/remote-data-ts",
   "version": "2.0.0",
   "main": "dist/index.js",
+  "module": "es6/index.js",
   "typings": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && tsc -p ./tsconfig.es6.json",
     "test": "npm run tslint && npm run prettier && npm run jest",
     "tslint": "tslint -c tslint.json --project tsconfig.json './src/**/*.ts'",
     "jest": "jest",

@@ -4,6 +4,7 @@
   "main": "dist/index.js",
   "module": "es6/index.js",
   "typings": "dist/index.d.ts",
+  "sideEffects": false,
   "scripts": {
     "build": "tsc -p ./tsconfig.build.json && tsc -p ./tsconfig.es6.json",
     "test": "npm run tslint && npm run prettier && npm run jest",

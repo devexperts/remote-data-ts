@@ -399,10 +399,20 @@ export const remoteData: Monad2<URI> &
 	bimap: <L, V, A, B>(fla: RemoteData<L, A>, f: (u: L) => V, g: (a: A) => B): RemoteData<V, B> =>
 		pipe(
 			fla,
-			fold<L, A, RemoteData<V, B>>(() => initial, () => pending, e => failure(f(e)), a => success(g(a))),
+			fold<L, A, RemoteData<V, B>>(
+				() => initial,
+				foldO(() => pending, progress),
+				e => failure(f(e)),
+				a => success(g(a)),
+			),
 		),
 	mapLeft: <L, V, A>(fla: RemoteData<L, A>, f: (u: L) => V): RemoteData<V, A> =>
-		fold<L, A, RemoteData<V, A>>(() => initial, () => pending, e => failure(f(e)), () => fla as any)(fla),
+		fold<L, A, RemoteData<V, A>>(
+			() => initial,
+			foldO(() => pending, progress),
+			e => failure(f(e)),
+			() => fla as any,
+		)(fla),
 
 	//Alt
 	alt: <L, A>(fx: RemoteData<L, A>, fy: () => RemoteData<L, A>): RemoteData<L, A> => fold(fy, fy, fy, () => fx)(fx),
@@ -414,7 +424,12 @@ export const remoteData: Monad2<URI> &
 	extend: <L, A, B>(fla: RemoteData<L, A>, f: FunctionN<[RemoteData<L, A>], B>): RemoteData<L, B> =>
 		pipe(
 			fla,
-			fold<L, A, RemoteData<L, B>>(() => initial, () => pending, () => fla as any, () => success(f(fla))),
+			fold<L, A, RemoteData<L, B>>(
+				() => initial,
+				foldO(() => pending, progress),
+				() => fla as any,
+				() => success(f(fla)),
+			),
 		),
 };
 

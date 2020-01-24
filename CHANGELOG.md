@@ -1,3 +1,12 @@
+## [2.0.3](https://github.com/devexperts/remote-data-ts/compare/v2.0.2...v2.0.3) (2020-01-24)
+
+
+### Bug Fixes
+
+* fix bimap, mapLeft, extend to forward progress correctly ([#45](https://github.com/devexperts/remote-data-ts/issues/45)) ([be78635](https://github.com/devexperts/remote-data-ts/commit/be78635))
+
+
+
 ## [2.0.2](https://github.com/devexperts/remote-data-ts/compare/v2.0.1...v2.0.2) (2020-01-17)
 
 

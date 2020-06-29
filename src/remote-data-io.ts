@@ -1,6 +1,6 @@
 import { RemoteData, RemoteFailure, RemoteInitial, RemotePending, RemoteProgress, RemoteSuccess } from './remote-data';
 import { optionFromNullable } from 'io-ts-types/lib/optionFromNullable';
-import { literal, number, type, Type, union } from 'io-ts';
+import { literal, number, type, Type, union } from 'io-ts/lib/index';
 
 export type JSONRemoteProgress = {
 	loaded: number;

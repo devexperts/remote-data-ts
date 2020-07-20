@@ -67,3 +67,5 @@ Coming soon (check the [source](src/remote-data.ts))
 
 ### Publish
 Don't forget to run `npm run changelog` and to commit the changes
+
+Just a test to see if CI works. This PR will be removed

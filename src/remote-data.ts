@@ -127,8 +127,8 @@ export const getOrElse = <L, A>(f: Lazy<A>) => (ma: RemoteData<L, A>): A => (isS
  * It applies a function to each case in the data structure.
  *
  * @example
- * const onInitial = "it's initial"
- * const onPending = "it's pending"
+ * const onInitial = () => "it's initial"
+ * const onPending = () => "it's pending"
  * const onFailure = (err) => "it's failure"
  * const onSuccess = (data) => `${data + 1}`
  * const f = fold(onInitial, onPending, onFailure, onSuccess)
@@ -159,6 +159,28 @@ export const fold = <E, A, B>(
 		}
 	}
 };
+
+/**
+ * A more concise way to "unwrap" values from {@link RemoteData} "container".
+ * It uses fold in its implementation, collapsing `onInitial` and `onPending` on the `onNone` handler.
+ * When fold's `onInitial` returns, `onNode` is called with `none`.
+ *
+ * @example
+ * const onNone = (progressOption) => "no data to show"
+ * const onFailure = (err) => "sorry, the request failed"
+ * const onSuccess = (data) => `result is: ${data + 1}`
+ * const f = fold(onInitial, onPending, onFailure, onSuccess)
+ *
+ * f(initial) // "no data to show"
+ * f(pending) // "no data to show"
+ * f(failure(new Error('error text'))) // "sorry, the request failed"
+ * f(success(21)) // "result is: 22"
+ */
+export const fold3 = <E, A, R>(
+	onNone: (progress: Option<RemoteProgress>) => R,
+	onFailure: (e: E) => R,
+	onSuccess: (a: A) => R,
+): ((fa: RemoteData<E, A>) => R) => fold(() => onNone(none), onNone, onFailure, onSuccess);
 
 /**
  * One more way to fold (unwrap) value from {@link RemoteData}.

@@ -648,6 +648,20 @@ describe('RemoteData', () => {
 				expect(RD.fold(() => 1, () => 2, () => 3, () => 4)(successRD)).toBe(4);
 			});
 		});
+		describe('fold3', () => {
+			it('initial', () => {
+				expect(RD.fold3(() => 1, () => 2, () => 3)(initialRD)).toBe(1);
+			});
+			it('pending', () => {
+				expect(RD.fold3(() => 1, () => 2, () => 3)(pendingRD)).toBe(1);
+			});
+			it('failure', () => {
+				expect(RD.fold3(() => 1, () => 2, () => 3)(failureRD)).toBe(2);
+			});
+			it('success', () => {
+				expect(RD.fold3(() => 1, () => 2, () => 3)(successRD)).toBe(3);
+			});
+		});
 		describe('isInitial', () => {
 			it('initial', () => {
 				expect(isInitial(initialRD)).toBe(true);

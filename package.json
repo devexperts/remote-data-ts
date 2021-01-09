@@ -21,7 +21,7 @@
   "license": "MPL-2.0",
   "devDependencies": {
     "@devexperts/lint": "^0.29.1",
-    "@types/jest": "^22.2.3",
+    "@types/jest": "^24.9.1",
     "conventional-changelog-cli": "^2.0.21",
     "import-path-rewrite": "github:gcanti/import-path-rewrite",
     "jest": "^24.8.0",

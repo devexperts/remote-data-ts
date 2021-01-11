@@ -115,7 +115,7 @@ export interface RemoteDataM2<M extends URIS2> extends ApplicativeComposition22<
 
 export type RemoteDataT3<M extends URIS3, S, R, E, A> = Kind3<M, S, R, RemoteData<E, A>>;
 
-export interface RemoteDataM3<M extends URIS4> {
+export interface RemoteDataM3<M extends URIS3> {
 	readonly map: <S, R, E, A, B>(fa: RemoteDataT3<M, S, R, E, A>, f: (a: A) => B) => RemoteDataT3<M, S, R, E, B>;
 	readonly of: <S, R, E, A>(a: A) => RemoteDataT3<M, S, R, E, A>;
 	readonly ap: <S, R, E, A, B>(

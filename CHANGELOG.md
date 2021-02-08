@@ -1,3 +1,17 @@
+## [2.0.5](https://github.com/devexperts/remote-data-ts/compare/v2.0.4...v2.0.5) (2021-02-08)
+
+
+### Bug Fixes
+
+* Correct `RemoteDataT3` constrant for `M` (`URIS4` -> `URIS3`) ([f81f3b8](https://github.com/devexperts/remote-data-ts/commit/f81f3b8d819bd0642ba00beebbe19e938e97a3fc))
+
+
+### Features
+
+* add Fold 3 ([#53](https://github.com/devexperts/remote-data-ts/issues/53)) ([5c26c11](https://github.com/devexperts/remote-data-ts/commit/5c26c110456e9431db1f34c8440b7ddc58013333)), closes [#30](https://github.com/devexperts/remote-data-ts/issues/30)
+
+
+
 ## [2.0.4](https://github.com/devexperts/remote-data-ts/compare/v2.0.3...v2.0.4) (2020-08-11)
 
 
@@ -16,11 +30,7 @@
 
 
 
-## [2.0.2](https://github.com/devexperts/remote-data-ts/compare/v2.0.1...v2.0.2) (2020-01-17)
-
-
-
-## [2.0.1](https://github.com/devexperts/remote-data-ts/compare/v2.0.0...v2.0.1) (2019-12-03)
+## [2.0.2](https://github.com/devexperts/remote-data-ts/compare/v2.0.0...v2.0.2) (2020-01-17)
 
 
 

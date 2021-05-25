@@ -6,14 +6,16 @@
   "typings": "dist/index.d.ts",
   "sideEffects": false,
   "scripts": {
-    "build": "tsc -p ./tsconfig.build.json && tsc -p ./tsconfig.es6.json",
+    "build": "tsc -p ./tsconfig.build.json && tsc -p ./tsconfig.es6.json && npm run import-path-rewrite && ts-node scripts/build",
     "test": "npm run tslint && npm run prettier && npm run jest",
     "tslint": "tslint -c tslint.json --project tsconfig.json './src/**/*.ts'",
     "jest": "jest",
-    "prettier": "prettier --list-different \"./src/**/*.ts\"",
-    "prettier:fix": "prettier --write \"./src/**/*.ts\"",
-    "prepublishOnly": "npm run test && npm run build",
-    "postbuild": "import-path-rewrite",
+    "prettier": "prettier --list-different \"./{src,scripts}/**/*.ts\"",
+    "prettier:fix": "prettier --write \"./{src,scripts}/**/*.ts\"",
+    "prepublishOnly": "ts-node scripts/pre-publish",
+    "prerelease": "npm run build",
+    "import-path-rewrite": "import-path-rewrite",
+    "release": "ts-node scripts/release",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0",
     "version": "npm run changelog && git add CHANGELOG.md"
   },
@@ -21,23 +23,28 @@
   "license": "MPL-2.0",
   "devDependencies": {
     "@devexperts/lint": "^0.29.1",
+    "@types/glob": "^7.1.3",
     "@types/jest": "^22.2.3",
     "conventional-changelog-cli": "^2.0.21",
     "import-path-rewrite": "github:gcanti/import-path-rewrite",
     "jest": "^24.8.0",
     "jest-cli": "^24.8.0",
+    "fp-ts": "^2.5.0",
+    "glob": "^7.1.7",
+    "io-ts": "^2.0.0",
+    "io-ts-types": "^0.5.7",
     "prettier": "^1.17.1",
     "ts-jest": "^23.10.5",
     "tslint": "^5.16.0",
     "tslint-config-prettier": "^1.18.0",
     "tslint-plugin-prettier": "^1.3.0",
+    "ts-node": "8.8.2",
     "typescript": "^3.5.2"
   },
-  "dependencies": {
+  "peerDependencies": {
     "fp-ts": "^2.0.0",
     "io-ts": "^2.0.0",
-    "io-ts-types": "^0.5.7",
-    "tslib": "^1.9.3"
+    "io-ts-types": "^0.5.7"
   },
   "repository": {
     "type": "git",

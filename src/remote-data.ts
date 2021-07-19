@@ -68,11 +68,11 @@ export type RemoteSuccess<A> = {
 export type RemoteData<E, A> = RemoteInitial | RemotePending | RemoteFailure<E> | RemoteSuccess<A>;
 
 //constructors
-export const failure = <E>(error: E): RemoteData<E, never> => ({
+export const failure = <E = never, A = never>(error: E): RemoteData<E, A> => ({
 	_tag: 'RemoteFailure',
 	error,
 });
-export const success = <A>(value: A): RemoteData<never, A> => ({
+export const success = <E = never, A = never>(value: A): RemoteData<E, A> => ({
 	_tag: 'RemoteSuccess',
 	value,
 });

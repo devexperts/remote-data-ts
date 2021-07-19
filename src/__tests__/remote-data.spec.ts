@@ -919,4 +919,12 @@ describe('RemoteData', () => {
 			});
 		});
 	});
+
+	it('types are inferred correctly when chaining', () => {
+		const fa: RemoteData<string, number> = RD.success(1);
+		pipe(
+			fa,
+			RD.chain(a => success(a)),
+		);
+	});
 });

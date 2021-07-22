@@ -1,4 +1,13 @@
-## [2.0.5](https://github.com/devexperts/remote-data-ts/compare/v2.0.4...v2.0.5) (2021-02-08)
+# [2.1.0](https://github.com/devexperts/remote-data-ts/compare/v2.0.4...v2.1.0) (2021-08-17)
+
+
+### Features
+
+* add Fold 3 ([#53](https://github.com/devexperts/remote-data-ts/issues/53)) ([5c26c11](https://github.com/devexperts/remote-data-ts/commit/5c26c110456e9431db1f34c8440b7ddc58013333)), closes [#30](https://github.com/devexperts/remote-data-ts/issues/30)
+* Support for import without lib or es6 ([#65](https://github.com/devexperts/remote-data-ts/issues/65)) ([02b8f08](https://github.com/devexperts/remote-data-ts/commit/02b8f0891b0dcc2fafd42354e8755d51e55f9368))
+
+
+* Update constructors to receive all generics (#61) ([674a2ac](https://github.com/devexperts/remote-data-ts/commit/674a2ac3f5f09f73aab5d8192fca64acf041aec6)), closes [#61](https://github.com/devexperts/remote-data-ts/issues/61)
 
 
 ### Bug Fixes
@@ -6,9 +15,9 @@
 * Correct `RemoteDataT3` constrant for `M` (`URIS4` -> `URIS3`) ([f81f3b8](https://github.com/devexperts/remote-data-ts/commit/f81f3b8d819bd0642ba00beebbe19e938e97a3fc))
 
 
-### Features
+### BREAKING CHANGES
 
-* add Fold 3 ([#53](https://github.com/devexperts/remote-data-ts/issues/53)) ([5c26c11](https://github.com/devexperts/remote-data-ts/commit/5c26c110456e9431db1f34c8440b7ddc58013333)), closes [#30](https://github.com/devexperts/remote-data-ts/issues/30)
+* generic parameters changed for `success` and `failure` constructors
 
 
 

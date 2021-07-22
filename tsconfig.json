@@ -4,13 +4,14 @@
     "moduleResolution": "node",
     "target": "es5",
     "lib": ["es6", "dom"],
-    "outDir": "dist",
+    "outDir": "dist/lib",
     "declaration": true,
     "strict": true,
     "importHelpers": true,
     "pretty": true,
     "noUnusedLocals": true,
-    "noEmitOnError": true
+    "noEmitOnError": true,
+    "esModuleInterop": true
   },
   "include": [
     "./src/**/*"

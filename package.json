@@ -1,6 +1,6 @@
 {
   "name": "@devexperts/remote-data-ts",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "main": "lib/index.js",
   "module": "es6/index.js",
   "typings": "lib/index.d.ts",

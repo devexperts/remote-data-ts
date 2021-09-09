@@ -1,3 +1,10 @@
+## [2.1.1](https://github.com/devexperts/remote-data-ts/compare/v2.0.4...v2.1.1) (2021-09-09)
+
+
+### Bug Fixes
+
+* invalid main and typings path in package.json ([#68](https://github.com/devexperts/remote-data-ts/issues/68)) ([4ca54c3](https://github.com/devexperts/remote-data-ts/commit/4ca54c3c20bb5f0a795f6aac5b0f1d38afc47b69))
+
 # [2.1.0](https://github.com/devexperts/remote-data-ts/compare/v2.0.4...v2.1.0) (2021-08-17)
 
 

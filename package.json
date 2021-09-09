@@ -1,9 +1,9 @@
 {
   "name": "@devexperts/remote-data-ts",
   "version": "2.1.0",
-  "main": "dist/index.js",
+  "main": "lib/index.js",
   "module": "es6/index.js",
-  "typings": "dist/index.d.ts",
+  "typings": "lib/index.d.ts",
   "sideEffects": false,
   "scripts": {
     "build": "tsc -p ./tsconfig.build.json && tsc -p ./tsconfig.es6.json && npm run import-path-rewrite && ts-node scripts/build",
